@@ -20,7 +20,6 @@ import android.widget.FrameLayout;
  * Created by hitomi on 2016/10/11.
  */
 class ActivityControllerLayout extends FrameLayout implements View.OnClickListener{
-
     public static final String TAG = "ActivitySwitcher";
 
     public static final int FLAG_DISPLAYING = 100;
