@@ -25,7 +25,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public static final int FLAG_DISPLAYING = 100;
     public static final int FLAG_DISPLAYED = 200;
-    public static final int FLAG_CLOSING = -1000;
+    public static final int FLAG_CLOSING = -100;
     public static final int FLAG_CLOSED = -200;
 
     private static final int STYLE_SINGLE = 1;
