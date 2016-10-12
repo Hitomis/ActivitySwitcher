@@ -17,6 +17,8 @@ public class ActivitySwitcher {
      */
     private GestureDetectorCompat menuDetector;
 
+    private boolean isOpen;
+
 
     private static class SingletonHolder {
         public final static ActivitySwitcher instance = new ActivitySwitcher();
@@ -35,8 +37,9 @@ public class ActivitySwitcher {
 
         @Override
         public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            if (distanceX <= -50 && Math.abs(distanceY) < 20) {
+            if (distanceX <= -50 && Math.abs(distanceY) < 20 && !isOpen) {
                 showSwitcher();
+                isOpen = true;
             }
             return true;
         }

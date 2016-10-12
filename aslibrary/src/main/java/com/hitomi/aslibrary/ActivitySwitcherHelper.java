@@ -30,16 +30,23 @@ class ActivitySwitcherHelper {
 
     public void startSwitch() {
         List<Activity> preActivities = actManager.getPreActivies();
-        preActivities.add(actManager.getCurrentActivity());
+        Activity currAct = actManager.getCurrentActivity();
+        preActivities.add(currAct);
 
         ViewGroup contentViewGroup, contentView;
+        int i = 0;
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
             contentView = (ViewGroup) contentViewGroup.getChildAt(0);
             contentViewGroup.removeView(contentView);
+            i++;
+            contentView.setX(i * 50);
             actControllerLayout.addView(contentView);
         }
+
+        FrameLayout currContentView = getContentView(currAct.getWindow());
+        currContentView.addView(actControllerLayout);
     }
 
     private final FrameLayout getContentView(Window window) {

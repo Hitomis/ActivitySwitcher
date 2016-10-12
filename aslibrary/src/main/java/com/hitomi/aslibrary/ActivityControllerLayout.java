@@ -10,14 +10,20 @@ import android.widget.FrameLayout;
 class ActivityControllerLayout extends FrameLayout {
 
     public ActivityControllerLayout(Context context) {
-        super(context);
+        this(context, null);
     }
 
     public ActivityControllerLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
+        this(context, attrs, 0);
     }
 
     public ActivityControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
+        init();
+    }
+
+    private void init() {
+
     }
 }
