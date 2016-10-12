@@ -7,7 +7,7 @@ import android.widget.FrameLayout;
 /**
  * Created by hitomi on 2016/10/11.
  */
-public class ActivityControllerLayout extends FrameLayout {
+class ActivityControllerLayout extends FrameLayout {
 
     public ActivityControllerLayout(Context context) {
         super(context);

@@ -1,15 +1,16 @@
-package com.hitomi.activityswitcher;
+package com.hitomi.activityswitcher.ui;
 
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 
-public class MainActivity extends AppCompatActivity {
+import com.hitomi.activityswitcher.R;
+
+public class ThreeActivitry extends BaseActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-
     }
+
 }
