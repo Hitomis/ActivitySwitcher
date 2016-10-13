@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -31,10 +32,10 @@ class ActivitySwitcherHelper {
         actManager = ActivityManager.getInstance();
         application.registerActivityLifecycleCallbacks(actManager);
         actControllerLayout = new ActivityControllerLayout(application);
+        attachBlurBackground();
     }
 
     public void startSwitch() {
-        attachBlurBackground();
         List<Activity> preActivities = actManager.getPreActivies();
         Activity currAct = actManager.getCurrentActivity();
         preActivities.add(currAct);
@@ -54,30 +55,54 @@ class ActivitySwitcherHelper {
     }
 
     /**
+     * 附加高斯模糊图片背景
+     */
+    private void attachBlurBackground() {
+        if (actControllerLayout.getBackground() != null) return;
+        actManager.setOnActivityLifeHandler(new ActivityManager.OnActivityLifeHandler() {
+            @Override
+            public void onCreated() {
+                setContainerBackground();
+            }
+        });
+    }
+
+    /**
      * 抽取系统桌面背景图, 设置为高斯模糊效果 <br/>
      *
      * 高斯模糊性能优化，参考文章 ：<a href = "http://www.jianshu.com/p/7ae7dfe47a70"/>[here]
      */
-    private void attachBlurBackground() {
-        // 获取系统桌面背景图片
-        WallpaperManager wallpaperManager = WallpaperManager.getInstance(appContext);
-        Drawable wallpaperDrawable = wallpaperManager.getDrawable();
-        Bitmap wallpaperBitmap = ((BitmapDrawable) wallpaperDrawable).getBitmap();
-        // 以当前 Activity 尺寸为参照物，居中裁剪
-        Bitmap centerBitmap = cropCenterBitmap(wallpaperBitmap);
-        final int scaleRatio = 20;
-        final int blurRadius = 8;
-        // filter是指缩放的效果，filter为true则会得到一个边缘平滑的bitmap，反之，则会得到边缘锯齿、pixelrelated的bitmap。
-        // 这里我们要对缩放的图片进行虚化，所以无所谓边缘效果，filter=false。
-        Bitmap scaledBitmap = Bitmap.createScaledBitmap(centerBitmap,
-                centerBitmap.getWidth() / scaleRatio,
-                centerBitmap.getHeight() / scaleRatio,
-                false);
-        Bitmap blurBitmap = FastBlur.doBlur(scaledBitmap, blurRadius, true);
-        ImageView imageView = new ImageView(appContext);
-        imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        imageView.setImageBitmap(blurBitmap);
-        actControllerLayout.setBackgroundDrawable(imageView.getDrawable());
+    private void setContainerBackground() {
+        new AsyncTask<Void, Void, Bitmap>() {
+
+            @Override
+            protected Bitmap doInBackground(Void... voids) {
+                // 获取系统桌面背景图片
+                WallpaperManager wallpaperManager = WallpaperManager.getInstance(appContext);
+                Drawable wallpaperDrawable = wallpaperManager.getDrawable();
+                Bitmap wallpaperBitmap = ((BitmapDrawable) wallpaperDrawable).getBitmap();
+                // 以当前 Activity 尺寸为参照物，居中裁剪
+                Bitmap centerBitmap = cropCenterBitmap(wallpaperBitmap);
+                final int scaleRatio = 20;
+                final int blurRadius = 8;
+                // filter是指缩放的效果，filter为true则会得到一个边缘平滑的bitmap，反之，则会得到边缘锯齿、pixelrelated的bitmap。
+                // 这里我们要对缩放的图片进行虚化，所以无所谓边缘效果，filter=false。
+                Bitmap scaledBitmap = Bitmap.createScaledBitmap(centerBitmap,
+                        centerBitmap.getWidth() / scaleRatio,
+                        centerBitmap.getHeight() / scaleRatio,
+                        false);
+                // 返回高斯模糊渲染后的图片
+                return FastBlur.doBlur(scaledBitmap, blurRadius, true);
+            }
+
+            @Override
+            protected void onPostExecute(Bitmap bitmap) {
+                ImageView imageView = new ImageView(appContext);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setImageBitmap(bitmap);
+                actControllerLayout.setBackgroundDrawable(imageView.getDrawable());
+            }
+        }.execute();
     }
 
     /**

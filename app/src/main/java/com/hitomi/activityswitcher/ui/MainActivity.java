@@ -1,6 +1,5 @@
 package com.hitomi.activityswitcher.ui;
 
-import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 
@@ -14,7 +13,7 @@ public class MainActivity extends BaseActivity {
         setContentView(R.layout.activity_main);
         setBackground(Color.parseColor("#258cff"));
         setActivityTag("MainActivity");
-        startActivity(new Intent(this, OneActivitry.class));
+//        startActivity(new Intent(this, OneActivitry.class));
     }
 
 }

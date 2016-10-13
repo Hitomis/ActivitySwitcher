@@ -1,9 +1,8 @@
 package com.hitomi.aslibrary;
 
 import android.app.Application;
-import android.support.v4.view.GestureDetectorCompat;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 
 /**
  * Created by hitomi on 2016/10/11.
@@ -12,13 +11,9 @@ public class ActivitySwitcher {
 
     private ActivitySwitcherHelper switcherHelper;
 
-    /**
-     * 手势识别器
-     */
-    private GestureDetectorCompat menuDetector;
+    private boolean switching;
 
-    private boolean isOpen;
-
+    private float preX, touchSlop;
 
     private static class SingletonHolder {
         public final static ActivitySwitcher instance = new ActivitySwitcher();
@@ -30,25 +25,26 @@ public class ActivitySwitcher {
 
     public void init(Application application) {
         switcherHelper = new ActivitySwitcherHelper(application);
-        menuDetector = new GestureDetectorCompat(application, menuGestureListener);
+        ViewConfiguration conf = ViewConfiguration.get(application);
+        touchSlop = conf.getScaledEdgeSlop();
     }
 
-    private GestureDetector.SimpleOnGestureListener menuGestureListener = new GestureDetector.SimpleOnGestureListener() {
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            if (distanceX <= -50 && Math.abs(distanceY) < 20 && !isOpen) {
-                showSwitcher();
-                isOpen = true;
-            }
-            return true;
-        }
-
-
-    };
-
     public void processTouchEvent(MotionEvent event) {
-        menuDetector.onTouchEvent(event);
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                preX = event.getX();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                float slideX = event.getX() - preX;
+                if (preX <= touchSlop && slideX > 50 && !switching) {
+                    showSwitcher();
+                    switching = true;
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+
+                break;
+        }
     }
 
     public void showSwitcher() {
