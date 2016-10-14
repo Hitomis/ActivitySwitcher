@@ -2,6 +2,7 @@ package com.hitomi.aslibrary;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
+import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
@@ -10,6 +11,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -31,16 +33,21 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     private static final float DELAY_RATE = 3f;
 
-//    private View controChild;
+    private static final float CENTER_SCALE_RATE = .75f;
+
+    private static final float OFFSET_SCALE_RATE = .02f;
+
+    private OnSelectedActivityCallback onSelectedActivityCallback;
+
+    private View controChild;
 
     private float maxScaleValue;
 
     private float maxOffsetX, preX, preY;
 
-    private int style;
+    private float touchSlopX, getTouchSlopY;
 
-    private OnSelectedActivityCallback onSelectedActivityCallback;
-    private View controChild;
+    private int screenWidth;
 
     public ActivityControllerLayout(Context context) {
         this(context, null);
@@ -52,14 +59,16 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public ActivityControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+
         init();
     }
 
     private void init() {
-        int screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
-
-        maxScaleValue = .95f;
+        ViewConfiguration conf = ViewConfiguration.get(getContext());
+        touchSlopX = getTouchSlopY = conf.getScaledTouchSlop() / 2;
+        screenWidth = getContext().getResources().getDisplayMetrics().widthPixels;
         maxOffsetX = screenWidth - 150;
+        maxScaleValue = .95f;
     }
 
     @Override
@@ -119,6 +128,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public void onClick(View view) {
+        if (Math.abs(view.getX()) > touchSlopX || Math.abs(view.getY()) > getTouchSlopY) return;
         switch (getLayoutStyle()) {
             case STYLE_SINGLE:
                 displayBySingleStyle(true);
@@ -131,7 +141,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     private void displayBySingleStyle(boolean reverse) {
-        final float scaleRate = .75f;
         final View singleChild = getChildAt(0);
         ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
         scaleAnima.setDuration(200);
@@ -140,8 +149,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 float fraction = valueAnimator.getAnimatedFraction();
-                float scaleValue = 1 - (1 - scaleRate) * fraction;
-                log(String.valueOf(scaleValue));
+                float scaleValue = 1 - (1 - CENTER_SCALE_RATE) * fraction;
                 singleChild.setScaleX(scaleValue);
                 singleChild.setScaleY(scaleValue);
             }
@@ -160,7 +168,31 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     private void displayByDoubleStyle() {
+        final View belowChild = getChildAt(0);
+        final View aboveChild = getChildAt(1);
+        ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
+        scaleAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                float fraction = valueAnimator.getAnimatedFraction();
+                float scaleValue = 1 - (1 - CENTER_SCALE_RATE) * fraction;
+                belowChild.setScaleX(scaleValue);
+                belowChild.setScaleY(scaleValue);
 
+                scaleValue = 1 - (1 - (CENTER_SCALE_RATE + OFFSET_SCALE_RATE)) * fraction;
+                aboveChild.setScaleX(scaleValue);
+                aboveChild.setScaleY(scaleValue);
+            }
+        });
+
+        float endTranX = aboveChild.getWidth() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2;
+        ObjectAnimator tranXAnima = ObjectAnimator.ofFloat(aboveChild, "X", aboveChild.getX(), endTranX);
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.setDuration(200);
+        animatorSet.setInterpolator(new DecelerateInterpolator());
+        animatorSet.play(scaleAnima).with(tranXAnima);
+        animatorSet.start();
     }
 
     private void displayByMultipleStyle() {

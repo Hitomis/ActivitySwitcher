@@ -87,6 +87,7 @@ class ActivitySwitcherHelper {
         actManager.setOnActivityLifeHandler(new ActivityManager.OnActivityLifeHandler() {
             @Override
             public void onCreated() {
+                if (actControllerLayout.getBackground() != null) return;
                 setContainerBackground();
             }
         });
