@@ -9,6 +9,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
@@ -21,13 +22,18 @@ import java.util.List;
  */
 class ActivitySwitcherHelper {
 
+    private ActivitySwitcher actSwitcher;
+
     private Context appContext;
 
     private ActivityManager actManager;
 
     private ActivityControllerLayout actControllerLayout;
 
-    public ActivitySwitcherHelper(@NonNull Application application) {
+    private List<Activity> preActivities;
+
+    public ActivitySwitcherHelper(ActivitySwitcher switcher, @NonNull Application application) {
+        actSwitcher = switcher;
         appContext = application;
         actManager = ActivityManager.getInstance();
         application.registerActivityLifecycleCallbacks(actManager);
@@ -36,7 +42,7 @@ class ActivitySwitcherHelper {
     }
 
     public void startSwitch() {
-        List<Activity> preActivities = actManager.getPreActivies();
+        preActivities = actManager.getPreActivies();
         Activity currAct = actManager.getCurrentActivity();
         preActivities.add(currAct);
 
@@ -51,7 +57,26 @@ class ActivitySwitcherHelper {
 
         FrameLayout currContentView = getContentView(currAct.getWindow());
         currContentView.addView(actControllerLayout);
-        actControllerLayout.display();
+        actControllerLayout.display(new ActivityControllerLayout.OnSelectedActivityCallback() {
+            @Override
+            public void onSelected(View view) {
+                actSwitcher.setSwitching(false);
+                endSwitch(view);
+            }
+        });
+    }
+
+    public void endSwitch(View selectedChild) {
+        int index = actControllerLayout.indexOfChild(selectedChild);
+        Activity selectedAct = preActivities.get(index);
+        if (actManager.getCurrentActivity() == selectedAct) {
+            FrameLayout currContentView = getContentView(selectedAct.getWindow());
+            actControllerLayout.removeView(selectedChild);
+            currContentView.removeView(actControllerLayout);
+            currContentView.addView(selectedChild);
+        } else {
+
+        }
     }
 
     /**

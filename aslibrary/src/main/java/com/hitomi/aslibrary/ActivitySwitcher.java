@@ -24,7 +24,7 @@ public class ActivitySwitcher {
     }
 
     public void init(Application application) {
-        switcherHelper = new ActivitySwitcherHelper(application);
+        switcherHelper = new ActivitySwitcherHelper(this, application);
         ViewConfiguration conf = ViewConfiguration.get(application);
         touchSlop = conf.getScaledEdgeSlop();
     }
@@ -49,6 +49,10 @@ public class ActivitySwitcher {
 
     public void showSwitcher() {
         switcherHelper.startSwitch();
+    }
+
+    public void setSwitching(boolean switching) {
+        this.switching = switching;
     }
 
 }
