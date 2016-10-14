@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.os.Bundle;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
@@ -28,13 +29,12 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
     @Override
     public void onActivityCreated(Activity activity, Bundle bundle) {
         addActivity(activity);
-        if (activityLifeHandler != null)
-            activityLifeHandler.onCreated();
     }
 
     @Override
     public void onActivityStarted(Activity activity) {
-
+        if (activityLifeHandler != null)
+            activityLifeHandler.onCreated();
     }
 
     @Override
@@ -76,14 +76,14 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
      * 获取当前Activity（堆栈中最后一个压入的）
      */
     public Activity getCurrentActivity() {
-        Activity activity = activityStack.lastElement();
+        Activity activity = activityStack.get(activityStack.size() - 1);
         return activity;
     }
 
     public Activity getPreActivity() {
         int size = activityStack.size();
         if(size < 2)return null;
-        return activityStack.elementAt(size - 2);
+        return activityStack.get(size - 2);
     }
 
     /**
@@ -91,14 +91,22 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
      * @return
      */
     public List<Activity> getPreActivies() {
-        return activityStack.subList(0, activityStack.size() - 1);
+        List<Activity> preActivities = new ArrayList<>();
+        for (int i = 0, size = activityStack.size(); i < size; i++) {
+            if (activityStack.get(i) == getCurrentActivity()) {
+                break;
+            }
+            preActivities.add(activityStack.get(i));
+        }
+//        activityStack.subList(from, to); 这个方法有毒，巨坑爹
+        return preActivities;
     }
 
     /**
      * 结束当前Activity（堆栈中最后一个压入的）
      */
     public void finishActivity() {
-        Activity activity = activityStack.lastElement();
+        Activity activity = activityStack.get(activityStack.size() - 1);
         finishActivity(activity);
     }
 
