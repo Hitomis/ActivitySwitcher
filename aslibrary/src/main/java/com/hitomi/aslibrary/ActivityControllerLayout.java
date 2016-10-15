@@ -23,7 +23,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public static final String TAG = "ActivitySwitcher";
 
-    public static final int FLAG_DISPLAYING = 100;
+    public static final int FLAG_DISPLAYING = 1000;
     public static final int FLAG_DISPLAYED = 200;
     public static final int FLAG_CLOSING = -100;
     public static final int FLAG_CLOSED = -200;
