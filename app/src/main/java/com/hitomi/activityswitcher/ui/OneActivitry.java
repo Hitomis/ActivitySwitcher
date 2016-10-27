@@ -11,7 +11,7 @@ public class OneActivitry extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setBackground(Color.parseColor("#9f60d8"));
+        setBackground(Color.parseColor("#8cb1b1"));
         setActivityTag("OneActivitry");
 //        startActivity(new Intent(this, TwoActivitry.class));
     }

@@ -6,15 +6,18 @@ import android.app.WallpaperManager;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.support.annotation.NonNull;
+import android.util.DisplayMetrics;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -47,11 +50,19 @@ class ActivitySwitcherHelper {
         preActivities.add(currAct);
 
         ViewGroup contentViewGroup, contentView;
+        final int radius = 8;
+        final int shadowSize = 8;
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
             contentView = (ViewGroup) contentViewGroup.getChildAt(0);
             contentViewGroup.removeView(contentView);
+            if (contentView.getBackground() instanceof ColorDrawable) {
+                ColorDrawable colorDrawable = (ColorDrawable) contentView.getBackground();
+                RoundRectDrawableWithShadow roundDrawable = new RoundRectDrawableWithShadow(
+                        colorDrawable.getColor(), radius, shadowSize, shadowSize);
+                contentView.setBackgroundDrawable(roundDrawable);
+            }
             actControllerLayout.addView(contentView);
         }
 
@@ -84,13 +95,7 @@ class ActivitySwitcherHelper {
      */
     private void attachBlurBackground() {
         if (actControllerLayout.getBackground() != null) return;
-        actManager.setOnActivityLifeHandler(new ActivityManager.OnActivityLifeHandler() {
-            @Override
-            public void onCreated() {
-                if (actControllerLayout.getBackground() != null) return;
-                setContainerBackground();
-            }
-        });
+        setContainerBackground();
     }
 
     /**
@@ -168,11 +173,26 @@ class ActivitySwitcherHelper {
      */
     private int[] getActivitySize() {
         int[] actSize = new int[2];
-        Activity currAct = actManager.getCurrentActivity();
-        FrameLayout currContentView = getContentView(currAct.getWindow());
-        actSize[0] = currContentView.getMeasuredWidth();
-        actSize[1] = currContentView.getMeasuredHeight();
+        DisplayMetrics displayMetrics = appContext.getResources().getDisplayMetrics();
+        actSize[0] = displayMetrics.widthPixels;
+        actSize[1] = displayMetrics.heightPixels - getStatusHeight();
         return actSize;
+    }
+
+    /**
+     * 获取状态栏高度
+     * @return
+     */
+    private int getStatusHeight() {
+        try {
+            Class<?> c = Class.forName("com.android.internal.R$dimen");
+            Object object = c.newInstance();
+            Field field = c.getField("status_bar_height");
+            int x = (Integer) field.get(object);
+            return appContext.getResources().getDimensionPixelSize(x);
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private final FrameLayout getContentView(Window window) {

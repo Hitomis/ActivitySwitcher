@@ -1,7 +1,6 @@
 package com.hitomi.aslibrary;
 
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.LinearGradient;
 import android.graphics.Paint;
@@ -43,13 +42,13 @@ public class RoundRectDrawableWithShadow extends Drawable {
     private boolean mDirty = true;
     private boolean mAddPaddingForCorners = true;
 
-    public RoundRectDrawableWithShadow(float radius, float shadowSize, float maxShadowSize) {
+    public RoundRectDrawableWithShadow(int background, float radius, float shadowSize, float maxShadowSize) {
         mShadowStartColor = 0x43000000;
-        mShadowCentertColor = 0x17000000;
+        mShadowCentertColor = 0x43000000;
         mShadowEndColor = 0x00000000;
         mInsetShadow = 10;
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
-        mPaint.setColor(Color.TRANSPARENT);
+        mPaint.setColor(background);
         mCornerShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         mCornerShadowPaint.setStyle(Paint.Style.FILL);
         mCornerRadius = (int) (radius + .5f);

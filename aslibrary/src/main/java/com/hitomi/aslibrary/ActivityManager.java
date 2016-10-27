@@ -15,8 +15,6 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
 
     private static Stack<Activity> activityStack;
 
-    private OnActivityLifeHandler activityLifeHandler;
-
     private static class SingletonHolder {
         public final static ActivityManager instance = new ActivityManager();
     }
@@ -33,13 +31,10 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
 
     @Override
     public void onActivityStarted(Activity activity) {
-        if (activityLifeHandler != null)
-            activityLifeHandler.onCreated();
     }
 
     @Override
     public void onActivityResumed(Activity activity) {
-
     }
 
     @Override
@@ -146,11 +141,4 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
         addActivity(activity);
     }
 
-    public void setOnActivityLifeHandler(OnActivityLifeHandler handler) {
-        activityLifeHandler = handler;
-    }
-
-    public interface OnActivityLifeHandler {
-        void onCreated();
-    }
 }

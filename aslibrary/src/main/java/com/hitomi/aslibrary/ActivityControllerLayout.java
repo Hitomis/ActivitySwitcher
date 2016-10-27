@@ -79,7 +79,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        controChild = clickWhichChild(ev);
+        controChild = pressWhichChild(ev);
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 preY = ev.getY();
@@ -120,7 +120,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         tranYAnimator.start();
     }
 
-    private View clickWhichChild(MotionEvent ev) {
+    private View pressWhichChild(MotionEvent ev) {
         if (getLayoutStyle() == STYLE_SINGLE) return getChildAt(0);
         View clickChild = null;
         return clickChild;
