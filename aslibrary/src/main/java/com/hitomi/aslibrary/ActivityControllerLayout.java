@@ -12,7 +12,6 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -74,23 +73,13 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public void addView(View child) {
-        FrameLayout containerLayout = new FrameLayout(getContext());
-        LayoutParams containerLp = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        containerLayout.setLayoutParams(containerLp);
-        containerLayout.addView(child);
-        containerLayout.setOnClickListener(this);
-        super.addView(containerLayout);
-    }
-
-    public View getInnerChildAt(int index) {
-        return ((ViewGroup) getChildAt(index)).getChildAt(0);
+        super.addView(child);
+        child.setOnClickListener(this);
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if ((controChild = pressWhichChild(ev)) == null)
-            return super.dispatchTouchEvent(ev);
-        log("当前按住的是第 " + indexOfChild(controChild) + " 个 Activity");
+        controChild = pressWhichChild(ev);
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 preY = ev.getY();
@@ -133,17 +122,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     private View pressWhichChild(MotionEvent ev) {
         if (getLayoutStyle() == STYLE_SINGLE) return getChildAt(0);
-        View child, clickChild = null;
-        int childCount = getChildCount();
-        for (int i = 0; i <  childCount; i++) {
-            child = getChildAt(i);
-            if (ev.getX() >= child.getX()
-                    && ev.getX() <= child.getX() + child.getWidth()
-                    && ev.getY() >= child.getY()
-                    && ev.getY() <= child.getY() + child.getHeight()) {
-                clickChild = child;
-            }
-        }
+        View clickChild = null;
         return clickChild;
     }
 
@@ -189,8 +168,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     private void displayByDoubleStyle() {
-        final View belowChild = getInnerChildAt(0);
-        final View aboveChild = getInnerChildAt(1);
+        final View belowChild = getChildAt(0);
+        final View aboveChild = getChildAt(1);
         ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
         scaleAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -206,46 +185,13 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             }
         });
 
-        final float endTranX = aboveChild.getWidth() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2;
+        float endTranX = aboveChild.getWidth() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2;
         ObjectAnimator tranXAnima = ObjectAnimator.ofFloat(aboveChild, "X", aboveChild.getX(), endTranX);
 
         AnimatorSet animatorSet = new AnimatorSet();
         animatorSet.setDuration(200);
         animatorSet.setInterpolator(new DecelerateInterpolator());
         animatorSet.play(scaleAnima).with(tranXAnima);
-        animatorSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                View belowContainer = getChildAt(0);
-                View aboveContainer = getChildAt(1);
-                LayoutParams belowLp = (LayoutParams) belowContainer.getLayoutParams();
-                LayoutParams aboveLp = (LayoutParams) aboveContainer.getLayoutParams();
-
-                belowLp.width = (int) (belowContainer.getWidth() * CENTER_SCALE_RATE);
-                belowLp.height = (int) (belowContainer.getHeight() * CENTER_SCALE_RATE);
-                belowContainer.setLayoutParams(belowLp);
-                aboveLp.width = (int) (aboveContainer.getWidth() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE));
-                aboveLp.height = (int) (aboveContainer.getHeight() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE));
-                aboveContainer.setLayoutParams(aboveLp);
-
-                int belowX = (getWidth() - belowLp.width) / 2;
-                int belowY = (getHeight() - belowLp.height) / 2;
-                belowChild.setX(-belowX);
-                belowChild.setY(-belowY);
-                belowContainer.setX(belowX);
-                belowContainer.setY(belowY);
-
-                int aboveX = (getWidth() - aboveLp.width) / 2;
-                int aboveY = (getHeight() - aboveLp.height) / 2;
-                aboveChild.setX(-aboveX);
-                aboveChild.setY(-aboveY);
-                aboveContainer.setX(aboveX + endTranX);
-                aboveContainer.setY(aboveY);
-
-//                belowContainer.layout(belowX, belowY, belowX + belowLp.width, belowY + belowLp.height);
-//                requestLayout();
-            }
-        });
         animatorSet.start();
     }
 
