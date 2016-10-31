@@ -31,6 +31,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private static final float CENTER_SCALE_RATE = .65f;
     private static final float OFFSET_SCALE_RATE = .02f;
 
+    private static final int MIN_OFFSET_SIZE = 80;
+    private static final int MAX_OFFSET_SIZE = 180;
+
     private float pageOffsetSize;
 
     private int screenWidth;
@@ -69,8 +72,30 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 log("DOUBLE: " + controChild);
                 break;
             case STYLE_MULTIPLE:
+                final int chooseIndex = indexOfChild(view);
+                if (chooseIndex < getChildCount() - 1) {
+                    float tranX = getWidth() - (chooseIndex + 2) * pageOffsetSize;
+                    final float[] currX = new float[getChildCount() - chooseIndex -1];
+                    for (int i = chooseIndex + 1; i < getChildCount(); i++) {
+                        currX[i - chooseIndex - 1] = getChildAt(i).getX();
+                    }
+                    ValueAnimator tranXAnima = ValueAnimator.ofFloat(0, tranX);
+                    tranXAnima.setDuration(300);
+                    tranXAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                        @Override
+                        public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                            float valueX = Float.parseFloat(valueAnimator.getAnimatedValue().toString());
+                            View afterChild;
+                            for (int i = chooseIndex + 1; i < getChildCount(); i++) {
+                                afterChild = getChildAt(i);
+                                afterChild.setX(currX[i - chooseIndex - 1] + valueX);
+                            }
+                        }
+                    });
+                    tranXAnima.start();
+                    log(tranX + "");
+                }
                 log("MULTIPLE: " + controChild);
-
                 break;
         }
     }
@@ -185,7 +210,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         } else if (childCount == 2) {
             displayByDoubleStyle();
         } else {
-            pageOffsetSize = screenWidth * 1.f / childCount;
+            pageOffsetSize = screenWidth * 1.f / (childCount + 1);
+            pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? pageOffsetSize : MIN_OFFSET_SIZE;
+            pageOffsetSize = pageOffsetSize > MAX_OFFSET_SIZE ? MAX_OFFSET_SIZE : pageOffsetSize;
             displayByMultipleStyle();
         }
     }
