@@ -25,7 +25,7 @@ import android.widget.ImageView;
  */
 class ActivityControllerLayout extends FrameLayout implements View.OnClickListener{
 
-    public static final String TAG = "ActivityControllerLayout";
+    public static final String TAG = "ActivitySwitcher";
 
     private static final int STYLE_SINGLE = 1;
     private static final int STYLE_DOUBLE = 1 << 1;
