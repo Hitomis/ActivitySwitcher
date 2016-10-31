@@ -51,7 +51,7 @@ class ActivitySwitcherHelper {
 
         ViewGroup contentViewGroup, contentView;
         final int radius = 8;
-        final int shadowSize = 8;
+        final int shadowSize = 12;
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
