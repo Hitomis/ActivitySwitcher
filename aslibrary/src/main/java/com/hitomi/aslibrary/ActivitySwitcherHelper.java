@@ -52,6 +52,7 @@ class ActivitySwitcherHelper {
         ViewGroup contentViewGroup, contentView;
         final int radius = 8;
         final int shadowSize = 12;
+        int[] actSize = getActivitySize();
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
@@ -63,6 +64,8 @@ class ActivitySwitcherHelper {
                         colorDrawable.getColor(), radius, shadowSize, shadowSize);
                 contentView.setBackgroundDrawable(roundDrawable);
             }
+            FrameLayout.LayoutParams contentViewLp = new FrameLayout.LayoutParams(actSize[0], actSize[1]);
+            contentView.setLayoutParams(contentViewLp);
             actControllerLayout.addView(contentView);
         }
 

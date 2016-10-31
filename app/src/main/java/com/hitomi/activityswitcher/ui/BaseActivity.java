@@ -16,7 +16,9 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     protected void setActivityTag(String str) {
-        ((TextView) findViewById(R.id.text_view)).setText(str);
+        TextView tvTag = (TextView) findViewById(R.id.text_view);
+        tvTag.setTextSize(30);
+        tvTag.setText(str);
     }
 
     protected  void setBackground(int color) {
