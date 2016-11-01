@@ -119,7 +119,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         return animatorSet;
     }
 
-
     private AnimatorSet doubleStyleAnimator(View view) {
         ObjectAnimator preObjAnima;
         if (indexOfChild(view) == 0) {
@@ -231,7 +230,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 View child;
                 for (int i = 0; i <  childCount; i++) {
                     child = getChildAt(i);
-                    scaleValue = CENTER_SCALE_RATE + 4 * OFFSET_SCALE_RATE * (i - 1);
+                    scaleValue = CENTER_SCALE_RATE + 3 * OFFSET_SCALE_RATE * (i - 1);
                     scaleValue = 1 - (1 - scaleValue) * fraction;
                     child.setScaleX(scaleValue);
                     child.setScaleY(scaleValue);
@@ -251,7 +250,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 float initTranX;
                 for (int i = 0; i < childCount; i++) {
                     child = getChildAt(i);
-                    initTranX = (child.getWidth() - child.getWidth() * (CENTER_SCALE_RATE + 4 * OFFSET_SCALE_RATE * (i - 1))) * .5f;
+                    initTranX = (child.getWidth() - child.getWidth() * (CENTER_SCALE_RATE + 3 * OFFSET_SCALE_RATE * (i - 1))) * .5f;
                     tranX = pageOffsetSize * i;
                     tranX = fraction * tranX - initTranX + pageOffsetSize;
                     child.setX(tranX);
