@@ -18,7 +18,9 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by hitomi on 2016/10/11.
@@ -33,6 +35,8 @@ class ActivitySwitcherHelper {
 
     private ActivityControllerLayout actControllerLayout;
 
+    private Map<View, Drawable> actBackgroundMap;
+
     private List<Activity> preActivities;
 
     public ActivitySwitcherHelper(ActivitySwitcher switcher, @NonNull Application application) {
@@ -41,6 +45,7 @@ class ActivitySwitcherHelper {
         actManager = ActivityManager.getInstance();
         application.registerActivityLifecycleCallbacks(actManager);
         actControllerLayout = new ActivityControllerLayout(application);
+        actBackgroundMap = new HashMap<>();
         attachBlurBackground();
     }
 
@@ -53,13 +58,16 @@ class ActivitySwitcherHelper {
         final int radius = 8;
         final int shadowSize = 12;
         int[] actSize = getActivitySize();
+        Drawable actBackground;
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
             contentView = (ViewGroup) contentViewGroup.getChildAt(0);
             contentViewGroup.removeView(contentView);
-            if (contentView.getBackground() instanceof ColorDrawable) {
-                ColorDrawable colorDrawable = (ColorDrawable) contentView.getBackground();
+            actBackground = contentView.getBackground();
+            actBackgroundMap.put(contentView, actBackground);
+            if (actBackground instanceof ColorDrawable) {
+                ColorDrawable colorDrawable = (ColorDrawable) actBackground;
                 RoundRectDrawableWithShadow roundDrawable = new RoundRectDrawableWithShadow(
                         colorDrawable.getColor(), radius, shadowSize, shadowSize);
                 contentView.setBackgroundDrawable(roundDrawable);
@@ -75,22 +83,42 @@ class ActivitySwitcherHelper {
             @Override
             public void onSelected(View view) {
                 actSwitcher.setSwitching(false);
-                endSwitch(view);
+                endSwitch(actControllerLayout.indexOfChild(view));
             }
         });
     }
 
-    public void endSwitch(View selectedChild) {
-        int index = actControllerLayout.indexOfChild(selectedChild);
-        Activity selectedAct = preActivities.get(index);
-        if (actManager.getCurrentActivity() == selectedAct) {
-            FrameLayout currContentView = getContentView(selectedAct.getWindow());
-            actControllerLayout.removeView(selectedChild);
-            currContentView.removeView(actControllerLayout);
-            currContentView.addView(selectedChild);
-        } else {
-
+    public void endSwitch(int selectedIndex) {
+        // 从栈顶 Activity 的 ContentView 中移除 ActivityControllerLayout
+        FrameLayout topContentViewGroup = getContentView(actManager.getCurrentActivity().getWindow());
+        topContentViewGroup.removeView(actControllerLayout);
+        // 关闭当前选中的 Activity 之后的 Activity
+        Activity activity;
+        for (int i = selectedIndex + 1; i < preActivities.size(); i++) {
+            activity = preActivities.get(i);
+            activity.finish();
+            activity.overridePendingTransition(0, 0);
         }
+        // 将 ActivityControllerLayout 中的每个 ContentView 还原给 各个 Activity
+        View contentView;
+        FrameLayout contentViewGroup;
+        FrameLayout.LayoutParams contentViewLp;
+        for (int i = selectedIndex; i >= 0; i--) {
+            contentView = actControllerLayout.getChildAt(i);
+            contentView.setX(0);
+            contentView.setScaleX(1.0f);
+            contentView.setScaleY(1.0f);
+            contentView.setBackgroundDrawable(actBackgroundMap.get(contentView));
+            actControllerLayout.removeView(contentView);
+
+            activity = preActivities.get(i);
+            contentViewGroup = getContentView(activity.getWindow());
+            contentViewLp = new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT);
+            contentViewGroup.addView(contentView, contentViewLp);
+        }
+        actControllerLayout.removeAllViews();
     }
 
     /**

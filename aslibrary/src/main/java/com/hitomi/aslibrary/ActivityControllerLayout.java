@@ -62,7 +62,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     @Override
-    public void onClick(View view) {
+    public void onClick(final View view) {
         controChild = view;
         switch (getLayoutStyle()) {
             case STYLE_SINGLE:
@@ -73,15 +73,16 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 break;
             case STYLE_MULTIPLE:
                 final int chooseIndex = indexOfChild(view);
+                ValueAnimator afterTranXAnima = null;
                 if (chooseIndex < getChildCount() - 1) {
-                    float tranX = getWidth() - (chooseIndex + 2) * pageOffsetSize;
+                    float afterEndTranX = getWidth() - (chooseIndex + 2) * pageOffsetSize;
                     final float[] currX = new float[getChildCount() - chooseIndex -1];
                     for (int i = chooseIndex + 1; i < getChildCount(); i++) {
                         currX[i - chooseIndex - 1] = getChildAt(i).getX();
                     }
-                    ValueAnimator tranXAnima = ValueAnimator.ofFloat(0, tranX);
-                    tranXAnima.setDuration(300);
-                    tranXAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    afterTranXAnima = ValueAnimator.ofFloat(0, afterEndTranX);
+                    afterTranXAnima.setDuration(300);
+                    afterTranXAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
                         @Override
                         public void onAnimationUpdate(ValueAnimator valueAnimator) {
                             float valueX = Float.parseFloat(valueAnimator.getAnimatedValue().toString());
@@ -92,9 +93,34 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                             }
                         }
                     });
-                    tranXAnima.start();
-                    log(tranX + "");
                 }
+
+                float leftEdge = getWidth() * (1 - (CENTER_SCALE_RATE + 4 * OFFSET_SCALE_RATE * (chooseIndex - 1))) * .5f;
+                float chooseX = (chooseIndex + 1) * pageOffsetSize;
+                final float chooseEndTranX = leftEdge - chooseX;
+                ObjectAnimator chooseTranXAnima = ObjectAnimator.ofFloat(view, "translationX", view.getX(), view.getX() + chooseEndTranX);
+                chooseTranXAnima.setDuration(200);
+
+                ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
+                ObjectAnimator chooseScaleYAnima = ObjectAnimator.ofFloat(view, "scaleY", view.getScaleY(), 1.0f);
+                chooseScaleXAnima.setDuration(200);
+                chooseScaleYAnima.setDuration(200);
+                AnimatorSet animatorSet = new AnimatorSet();
+                AnimatorSet.Builder animaBuilder = animatorSet
+                        .play(chooseTranXAnima)
+                        .before(chooseScaleXAnima)
+                        .before(chooseScaleYAnima);
+                if (afterTranXAnima != null) {
+                    animaBuilder.after(afterTranXAnima);
+                }
+                animatorSet.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        if (onSelectedActivityCallback != null)
+                            onSelectedActivityCallback.onSelected(view);
+                    }
+                });
+                animatorSet.start();
                 log("MULTIPLE: " + controChild);
                 break;
         }

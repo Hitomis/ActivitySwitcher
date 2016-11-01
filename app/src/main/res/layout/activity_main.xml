@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/relay_background"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/relay_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.MainActivity">
 
     <TextView
         android:id="@+id/text_view"
-        android:layout_centerInParent="true"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
+
+    <!--<Button-->
+        <!--android:id="@+id/btn"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="jump" />-->
 
 </RelativeLayout>
