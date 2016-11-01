@@ -15,13 +15,6 @@ public class OneActivitry extends BaseActivity {
         setBackground(Color.parseColor("#8cb1b1"));
         setActivityTag("OneActivitry");
         startActivity(new Intent(OneActivitry.this, TwoActivitry.class));
-
-//        findViewById(R.id.btn).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                startActivity(new Intent(OneActivitry.this, TwoActivitry.class));
-//            }
-//        });
     }
 
 }

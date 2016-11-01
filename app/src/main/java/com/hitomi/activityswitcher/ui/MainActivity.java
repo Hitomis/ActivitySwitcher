@@ -12,7 +12,7 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        setBackground(Color.RED);
+        setBackground(Color.WHITE);
         setActivityTag("MainActivity");
         startActivity(new Intent(this, OneActivitry.class));
     }
