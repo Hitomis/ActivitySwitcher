@@ -85,7 +85,7 @@ class ActivitySwitcherHelper {
                 actSwitcher.setSwitching(false);
                 endSwitch(actControllerLayout.indexOfChild(view));
             }
-        });
+        }, actBackgroundMap);
     }
 
     public void endSwitch(int selectedIndex) {
@@ -94,13 +94,15 @@ class ActivitySwitcherHelper {
         topContentViewGroup.removeView(actControllerLayout);
         // 关闭当前选中的 Activity 之后的 Activity
         Activity activity;
+        View contentView;
         for (int i = selectedIndex + 1; i < preActivities.size(); i++) {
             activity = preActivities.get(i);
+            Window window = activity.getWindow();
+            window.getDecorView().setAlpha(0);
             activity.finish();
             activity.overridePendingTransition(0, 0);
         }
         // 将 ActivityControllerLayout 中的每个 ContentView 还原给 各个 Activity
-        View contentView;
         FrameLayout contentViewGroup;
         FrameLayout.LayoutParams contentViewLp;
         for (int i = selectedIndex; i >= 0; i--) {

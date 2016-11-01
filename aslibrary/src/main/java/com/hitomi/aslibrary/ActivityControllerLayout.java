@@ -6,6 +6,7 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -13,10 +14,10 @@ import android.view.View;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
+import java.util.Map;
+
 /**
- * 启用 ActivitySwitcher 候的 Activity 容器类
- *
- * TODO: 应该抽象出一个接口，Activity 的容器可以有很多种。用来展示出不同风格
+ * 排列、展示 Activity 容器类
  *
  * Created by hitomi on 2016/10/11.
  */
@@ -35,10 +36,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private static final int MAX_OFFSET_SIZE = 180;
 
     private float pageOffsetSize;
-
     private int screenWidth;
 
     private OnSelectedActivityCallback onSelectedActivityCallback;
+    private Map<View, Drawable> backgroundMap;
 
     public ActivityControllerLayout(Context context) {
         this(context, null);
@@ -85,15 +86,39 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     @NonNull
-    private AnimatorSet singleStyleAnimator(View view) {
-        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
+    private ObjectAnimator getCheckedScaleYAnima(View view) {
         ObjectAnimator chooseScaleYAnima = ObjectAnimator.ofFloat(view, "scaleY", view.getScaleY(), 1.0f);
-        chooseScaleXAnima.setDuration(200);
         chooseScaleYAnima.setDuration(200);
+        chooseScaleYAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                View child;
+                if (valueAnimator.getAnimatedFraction() > .5f) {
+                    for (int i = 0; i < getChildCount(); i++) {
+                        child = getChildAt(i);
+                        child.setBackgroundDrawable(backgroundMap.get(child));
+                    }
+                }
+            }
+        });
+        return chooseScaleYAnima;
+    }
+
+    @NonNull
+    private ObjectAnimator getCheckedScaleXAnima(View view) {
+        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
+        chooseScaleXAnima.setDuration(200);
+        return chooseScaleXAnima;
+    }
+
+    @NonNull
+    private AnimatorSet singleStyleAnimator(View view) {
         AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.play(chooseScaleXAnima).with(chooseScaleYAnima);
+        animatorSet.play(getCheckedScaleXAnima(view))
+                .with(getCheckedScaleYAnima(view));
         return animatorSet;
     }
+
 
     private AnimatorSet doubleStyleAnimator(View view) {
         ObjectAnimator preObjAnima;
@@ -107,12 +132,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             preObjAnima = ObjectAnimator.ofFloat(view, "X", view.getX(), 0);
             preObjAnima.setDuration(200);
         }
-        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
-        ObjectAnimator chooseScaleYAnima = ObjectAnimator.ofFloat(view, "scaleY", view.getScaleY(), 1.0f);
-        chooseScaleXAnima.setDuration(200);
-        chooseScaleYAnima.setDuration(200);
         AnimatorSet animatorSet = new AnimatorSet();
-        animatorSet.play(preObjAnima).before(chooseScaleXAnima).before(chooseScaleYAnima);
+        animatorSet.play(preObjAnima)
+                .before(getCheckedScaleXAnima(view))
+                .before(getCheckedScaleYAnima(view));
         return animatorSet;
     }
 
@@ -141,15 +164,11 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         }
         ObjectAnimator chooseTranXAnima = ObjectAnimator.ofFloat(view, "X", view.getX(), 0);
         chooseTranXAnima.setDuration(200);
-        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
-        chooseScaleXAnima.setDuration(200);
-        ObjectAnimator chooseScaleYAnima = ObjectAnimator.ofFloat(view, "scaleY", view.getScaleY(), 1.0f);
-        chooseScaleYAnima.setDuration(200);
         AnimatorSet animatorSet = new AnimatorSet();
         AnimatorSet.Builder animaBuilder = animatorSet
                 .play(chooseTranXAnima)
-                .before(chooseScaleXAnima)
-                .before(chooseScaleYAnima);
+                .before(getCheckedScaleXAnima(view))
+                .before(getCheckedScaleYAnima(view));
         if (afterTranXAnima != null) {
             animaBuilder.after(afterTranXAnima);
         }
@@ -247,8 +266,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
 
-    public void display(@NonNull OnSelectedActivityCallback callback) {
+    public void display(@NonNull OnSelectedActivityCallback callback, Map<View, Drawable> drawableMap) {
         onSelectedActivityCallback = callback;
+        backgroundMap = drawableMap;
         int childCount = getChildCount();
         if (childCount <=0) return ;
         if (childCount == 1) {
