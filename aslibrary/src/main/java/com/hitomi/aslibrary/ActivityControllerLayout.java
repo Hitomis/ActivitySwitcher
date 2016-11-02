@@ -11,6 +11,7 @@ import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
@@ -35,8 +36,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private static final int MIN_OFFSET_SIZE = 80;
     private static final int MAX_OFFSET_SIZE = 180;
 
+    private int width;
     private float pageOffsetSize;
-    private int screenWidth;
+    private boolean resetBackground;
 
     private OnSelectedActivityCallback onSelectedActivityCallback;
     private Map<View, Drawable> backgroundMap;
@@ -51,7 +53,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public ActivityControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        screenWidth = getResources().getDisplayMetrics().widthPixels;
+        width = getResources().getDisplayMetrics().widthPixels;
     }
 
     @Override
@@ -63,6 +65,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     @Override
     public void onClick(final View view) {
         AnimatorSet animatorSet = null;
+        resetBackground = false;
         switch (getLayoutStyle()) {
             case STYLE_SINGLE:
                 animatorSet = singleStyleAnimator(view);
@@ -78,8 +81,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (onSelectedActivityCallback != null)
+                if (onSelectedActivityCallback != null) {
                     onSelectedActivityCallback.onSelected(view);
+                    view.setOnClickListener(null);
+                }
             }
         });
         animatorSet.start();
@@ -92,12 +97,17 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         chooseScaleYAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                View child;
-                if (valueAnimator.getAnimatedFraction() > .5f) {
+                ViewGroup vgChild;
+                RoundRectDrawableWithShadow drawable;
+                if (valueAnimator.getAnimatedFraction() > .3f && !resetBackground) {
                     for (int i = 0; i < getChildCount(); i++) {
-                        child = getChildAt(i);
-                        child.setBackgroundDrawable(backgroundMap.get(child));
+                        vgChild = (ViewGroup) getChildAt(i);
+                        if (vgChild.getBackground() instanceof RoundRectDrawableWithShadow) {
+                            drawable = (RoundRectDrawableWithShadow) vgChild.getBackground();
+                            vgChild.setBackgroundColor(drawable.getBackgroundColor());
+                        }
                     }
+                    resetBackground = true;
                 }
             }
         });
@@ -122,7 +132,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private AnimatorSet doubleStyleAnimator(View view) {
         ObjectAnimator preObjAnima;
         if (indexOfChild(view) == 0) {
-            float afterEndTranX = getWidth() * .5f;
+            float afterEndTranX = width * .5f;
             View afterChild = getChildAt(1);
             preObjAnima = ObjectAnimator.ofFloat(afterChild, "X",
                     afterChild.getX(), afterChild.getX() + afterEndTranX);
@@ -142,7 +152,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         final int chooseIndex = indexOfChild(view);
         ValueAnimator afterTranXAnima = null;
         if (chooseIndex < getChildCount() - 1) {
-            float afterEndTranX = getWidth() - (chooseIndex + 2) * pageOffsetSize;
+            float afterEndTranX = width - (chooseIndex + 2) * pageOffsetSize;
             final float[] currX = new float[getChildCount() - chooseIndex -1];
             for (int i = chooseIndex + 1; i < getChildCount(); i++) {
                 currX[i - chooseIndex - 1] = getChildAt(i).getX();
@@ -209,7 +219,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             }
         });
 
-        float endTranX = aboveChild.getWidth() * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2;
+        float endTranX = width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2;
         ObjectAnimator tranXAnima = ObjectAnimator.ofFloat(aboveChild, "X", aboveChild.getX(), endTranX);
 
         AnimatorSet animatorSet = new AnimatorSet();
@@ -250,7 +260,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 float initTranX;
                 for (int i = 0; i < childCount; i++) {
                     child = getChildAt(i);
-                    initTranX = (child.getWidth() - child.getWidth() * (CENTER_SCALE_RATE + 3 * OFFSET_SCALE_RATE * (i - 1))) * .5f;
+                    initTranX = (width - width * (CENTER_SCALE_RATE + 3 * OFFSET_SCALE_RATE * (i - 1))) * .5f;
                     tranX = pageOffsetSize * i;
                     tranX = fraction * tranX - initTranX + pageOffsetSize;
                     child.setX(tranX);
@@ -275,7 +285,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         } else if (childCount == 2) {
             displayByDoubleStyle();
         } else {
-            pageOffsetSize = screenWidth * 1.f / (childCount + 1);
+            pageOffsetSize = width * 1.f / (childCount + 1);
             pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? pageOffsetSize : MIN_OFFSET_SIZE;
             pageOffsetSize = pageOffsetSize > MAX_OFFSET_SIZE ? MAX_OFFSET_SIZE : pageOffsetSize;
             displayByMultipleStyle();
