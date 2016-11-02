@@ -58,23 +58,28 @@ class ActivitySwitcherHelper {
         final int radius = 8;
         final int shadowSize = 12;
         int[] actSize = getActivitySize();
-        Drawable actBackground;
+        Drawable background;
+        ActivityContainer container;
         for (Activity activity : preActivities) {
             if (activity.getWindow() == null) continue;
             contentViewGroup = getContentView(activity.getWindow());
             contentView = (ViewGroup) contentViewGroup.getChildAt(0);
             contentViewGroup.removeView(contentView);
-            actBackground = contentView.getBackground();
-            actBackgroundMap.put(contentView, actBackground);
-            if (actBackground instanceof ColorDrawable) {
-                ColorDrawable colorDrawable = (ColorDrawable) actBackground;
+            container = new ActivityContainer(appContext);
+            container.addView(contentView);
+            background = contentView.getBackground() != null
+                    ? contentView.getBackground()
+                    : activity.getWindow().getDecorView().getBackground();
+            if (background instanceof ColorDrawable) {
+                actBackgroundMap.put(contentView, background);
+                ColorDrawable colorDrawable = (ColorDrawable) background;
                 RoundRectDrawableWithShadow roundDrawable = new RoundRectDrawableWithShadow(
                         colorDrawable.getColor(), radius, shadowSize, shadowSize);
-                contentView.setBackgroundDrawable(roundDrawable);
+                container.setBackgroundDrawable(roundDrawable);
             }
             FrameLayout.LayoutParams contentViewLp = new FrameLayout.LayoutParams(actSize[0], actSize[1]);
-            contentView.setLayoutParams(contentViewLp);
-            actControllerLayout.addView(contentView);
+            container.setLayoutParams(contentViewLp);
+            actControllerLayout.addView(container);
         }
 
         FrameLayout currContentView = getContentView(currAct.getWindow());
@@ -95,7 +100,7 @@ class ActivitySwitcherHelper {
         // 关闭当前选中的 Activity 之后的 Activity
         Activity activity;
         View contentView;
-        for (int i = selectedIndex + 1; i < preActivities.size(); i++) {
+        for (int i = preActivities.size() - 1; i > selectedIndex; i--) {
             activity = preActivities.get(i);
             Window window = activity.getWindow();
             window.getDecorView().setAlpha(0);
@@ -105,13 +110,12 @@ class ActivitySwitcherHelper {
         // 将 ActivityControllerLayout 中的每个 ContentView 还原给 各个 Activity
         FrameLayout contentViewGroup;
         FrameLayout.LayoutParams contentViewLp;
+        ActivityContainer activityContainer;
         for (int i = selectedIndex; i >= 0; i--) {
-            contentView = actControllerLayout.getChildAt(i);
-            contentView.setX(0);
-            contentView.setScaleX(1.0f);
-            contentView.setScaleY(1.0f);
-            contentView.setBackgroundDrawable(actBackgroundMap.get(contentView));
-            actControllerLayout.removeView(contentView);
+            activityContainer = (ActivityContainer) actControllerLayout.getChildAt(i);
+            contentView = activityContainer.getChildAt(0);
+            activityContainer.removeView(contentView);
+            actControllerLayout.removeView(activityContainer);
 
             activity = preActivities.get(i);
             contentViewGroup = getContentView(activity.getWindow());
