@@ -1,5 +1,6 @@
 package com.hitomi.aslibrary;
 
+import android.app.Activity;
 import android.app.Application;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
@@ -41,15 +42,14 @@ public class ActivitySwitcher {
                     switching = true;
                 }
                 break;
-            case MotionEvent.ACTION_CANCEL:
-
-                break;
         }
     }
 
-    public void finishSwitch() {
-        if (switching) {
+    public void finishSwitch(Activity activity) {
+        if (switcherHelper.isActivityControllerDisplayed()) {
             switcherHelper.endSwitch();
+        } else if (switcherHelper.isActivityControllerClosed()) {
+            activity.finish();
         }
     }
 

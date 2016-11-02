@@ -26,8 +26,14 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public static final String TAG = "ActivitySwitcher";
 
+    public static final int FLAG_DISPLAYING = 100;
+    public static final int FLAG_DISPLAYED = 200;
+    public static final int FLAG_CLOSING = -100;
+    public static final int FLAG_CLOSED = -200;
+
     private static final int STYLE_SINGLE = 1;
     private static final int STYLE_DOUBLE = 1 << 1;
+
     private static final int STYLE_MULTIPLE = 1 << 2;
 
     private static final float CENTER_SCALE_RATE = .65f;
@@ -36,12 +42,13 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private static final int MIN_OFFSET_SIZE = 80;
     private static final int MAX_OFFSET_SIZE = 180;
 
+    private int flag;
     private int width;
     private float pageOffsetSize;
+
     private boolean resetBackground;
 
     private OnSelectedActivityCallback onSelectedActivityCallback;
-    private Map<View, Drawable> backgroundMap;
     private View controView;
 
     public ActivityControllerLayout(Context context) {
@@ -54,6 +61,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     public ActivityControllerLayout(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        flag = FLAG_CLOSED;
         width = getResources().getDisplayMetrics().widthPixels;
     }
 
@@ -65,8 +73,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public void onClick(final View view) {
-        controView = view;
-        closure();
+        if (flag == FLAG_DISPLAYED) {
+            controView = view;
+            closure();
+        }
     }
 
     @NonNull
@@ -274,9 +284,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         }
     }
 
-    public void display(@NonNull OnSelectedActivityCallback callback, Map<View, Drawable> drawableMap) {
+    public void display(@NonNull OnSelectedActivityCallback callback) {
         onSelectedActivityCallback = callback;
-        backgroundMap = drawableMap;
+        flag = FLAG_DISPLAYING;
         Animator animator;
         int childCount = getChildCount();
         if (childCount <=0) return ;
@@ -295,12 +305,18 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             public void onAnimationStart(Animator animation) {
                 updateContainerIntercept(true);
             }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                flag = FLAG_DISPLAYED;
+            }
         });
         animator.start();
     }
 
     public void closure() {
         controView = controView == null ? getChildAt(getChildCount() - 1) : controView;
+        flag = FLAG_CLOSING;
         AnimatorSet animatorSet = null;
         resetBackground = false;
         switch (getLayoutStyle()) {
@@ -324,9 +340,14 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     controView.setOnClickListener(null);
                     controView = null;
                 }
+                flag = FLAG_CLOSED;
             }
         });
         animatorSet.start();
+    }
+
+    public int getFlag() {
+        return flag;
     }
 
     public void log(String text) {

@@ -90,11 +90,19 @@ class ActivitySwitcherHelper {
                 actSwitcher.setSwitching(false);
                 endSwitch(actControllerLayout.indexOfChild(view));
             }
-        }, actBackgroundMap);
+        });
     }
 
     public void endSwitch() {
         actControllerLayout.closure();
+    }
+
+    public boolean isActivityControllerClosed() {
+        return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_CLOSED;
+    }
+
+    public boolean isActivityControllerDisplayed() {
+        return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_DISPLAYED;
     }
 
     private void endSwitch(int selectedIndex) {

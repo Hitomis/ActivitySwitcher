@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        ActivitySwitcher.getInstance().finishSwitch();
+        ActivitySwitcher.getInstance().finishSwitch(this);
     }
 
     @Override
