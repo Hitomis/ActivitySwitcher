@@ -41,6 +41,7 @@ public class RoundRectDrawableWithShadow extends Drawable {
     float mRawShadowSize;
     private boolean mDirty = true;
     private boolean mAddPaddingForCorners = true;
+    private int backgroundColor;
 
     public RoundRectDrawableWithShadow(int background, float radius, float shadowSize, float maxShadowSize) {
         mShadowStartColor = 0x43000000;
@@ -48,6 +49,7 @@ public class RoundRectDrawableWithShadow extends Drawable {
         mShadowEndColor = 0x00000000;
         mInsetShadow = 10;
         mPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
+        backgroundColor = background;
         mPaint.setColor(background);
         mCornerShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
         mCornerShadowPaint.setStyle(Paint.Style.FILL);
@@ -289,6 +291,10 @@ public class RoundRectDrawableWithShadow extends Drawable {
 
     void setMaxShadowSize(float size) {
         setShadowSize(mRawShadowSize, size);
+    }
+
+    int getBackgroundColor() {
+        return backgroundColor;
     }
 
     float getMinWidth() {
