@@ -47,6 +47,12 @@ public class ActivitySwitcher {
         }
     }
 
+    public void finishSwitch() {
+        if (switching) {
+            switcherHelper.endSwitch();
+        }
+    }
+
     public void showSwitcher() {
         switcherHelper.startSwitch();
     }

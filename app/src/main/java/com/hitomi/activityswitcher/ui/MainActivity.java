@@ -47,6 +47,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onBackPressed() {
+        ActivitySwitcher.getInstance().finishSwitch();
+    }
+
+    @Override
     public void onActionModeFinished(ActionMode mode) {
         super.onActionModeFinished(mode);
     }

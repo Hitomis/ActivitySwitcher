@@ -93,7 +93,11 @@ class ActivitySwitcherHelper {
         }, actBackgroundMap);
     }
 
-    public void endSwitch(int selectedIndex) {
+    public void endSwitch() {
+        actControllerLayout.closure();
+    }
+
+    private void endSwitch(int selectedIndex) {
         // 从栈顶 Activity 的 ContentView 中移除 ActivityControllerLayout
         FrameLayout topContentViewGroup = getContentView(actManager.getCurrentActivity().getWindow());
         topContentViewGroup.removeView(actControllerLayout);
@@ -107,7 +111,7 @@ class ActivitySwitcherHelper {
             activity.finish();
             activity.overridePendingTransition(0, 0);
         }
-        // 将 ActivityControllerLayout 中的每个 ContentView 还原给 各个 Activity
+        // 将 ActivityControllerLayout 中的每个 ContentView 还原给各个 Activity
         FrameLayout contentViewGroup;
         FrameLayout.LayoutParams contentViewLp;
         ActivityContainer activityContainer;

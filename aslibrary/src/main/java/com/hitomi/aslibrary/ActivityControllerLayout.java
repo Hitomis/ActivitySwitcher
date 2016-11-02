@@ -42,6 +42,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     private OnSelectedActivityCallback onSelectedActivityCallback;
     private Map<View, Drawable> backgroundMap;
+    private View controView;
 
     public ActivityControllerLayout(Context context) {
         this(context, null);
@@ -64,30 +65,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public void onClick(final View view) {
-        AnimatorSet animatorSet = null;
-        resetBackground = false;
-        switch (getLayoutStyle()) {
-            case STYLE_SINGLE:
-                animatorSet = singleStyleAnimator(view);
-                break;
-            case STYLE_DOUBLE:
-                animatorSet = doubleStyleAnimator(view);
-                break;
-            case STYLE_MULTIPLE:
-                animatorSet = multipleStyleAnimator(view);
-                break;
-        }
-        if (animatorSet == null) return ;
-        animatorSet.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                if (onSelectedActivityCallback != null) {
-                    onSelectedActivityCallback.onSelected(view);
-                    view.setOnClickListener(null);
-                }
-            }
-        });
-        animatorSet.start();
+        controView = view;
+        closure();
     }
 
     @NonNull
@@ -184,7 +163,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         return animatorSet;
     }
 
-    private void displayBySingleStyle() {
+    private Animator displayBySingleStyle() {
         final View singleChild = getChildAt(0);
         ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
         scaleAnima.setDuration(200);
@@ -198,10 +177,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 singleChild.setScaleY(scaleValue);
             }
         });
-        scaleAnima.start();
+        return scaleAnima;
     }
 
-    private void displayByDoubleStyle() {
+    private Animator displayByDoubleStyle() {
         final View belowChild = getChildAt(0);
         final View aboveChild = getChildAt(1);
         ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
@@ -226,10 +205,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.setDuration(200);
         animatorSet.setInterpolator(new DecelerateInterpolator());
         animatorSet.play(scaleAnima).with(tranXAnima);
-        animatorSet.start();
+        return animatorSet;
     }
 
-    private void displayByMultipleStyle() {
+    private Animator displayByMultipleStyle() {
         ValueAnimator scaleAnima = ValueAnimator.ofFloat(1, 100);
         scaleAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -271,28 +250,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.setDuration(200);
         animatorSet.setInterpolator(new DecelerateInterpolator());
         animatorSet.play(scaleAnima).with(tranXAnima);
-        animatorSet.start();
+        return animatorSet;
     }
 
-
-    public void display(@NonNull OnSelectedActivityCallback callback, Map<View, Drawable> drawableMap) {
-        onSelectedActivityCallback = callback;
-        backgroundMap = drawableMap;
-        int childCount = getChildCount();
-        if (childCount <=0) return ;
-        if (childCount == 1) {
-            displayBySingleStyle();
-        } else if (childCount == 2) {
-            displayByDoubleStyle();
-        } else {
-            pageOffsetSize = width * 1.f / (childCount + 1);
-            pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? pageOffsetSize : MIN_OFFSET_SIZE;
-            pageOffsetSize = pageOffsetSize > MAX_OFFSET_SIZE ? MAX_OFFSET_SIZE : pageOffsetSize;
-            displayByMultipleStyle();
-        }
-    }
-
-    public int getLayoutStyle() {
+    private int getLayoutStyle() {
         int style = 0;
         int childCount = getChildCount();
         if (childCount == 1) {
@@ -303,6 +264,69 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             style = STYLE_MULTIPLE;
         }
         return style;
+    }
+
+    private void updateContainerIntercept(boolean interceptEvent) {
+        ActivityContainer container;
+        for (int i = 0; i < getChildCount(); i++) {
+            container = (ActivityContainer) getChildAt(i);
+            container.setIntercept(interceptEvent);
+        }
+    }
+
+    public void display(@NonNull OnSelectedActivityCallback callback, Map<View, Drawable> drawableMap) {
+        onSelectedActivityCallback = callback;
+        backgroundMap = drawableMap;
+        Animator animator;
+        int childCount = getChildCount();
+        if (childCount <=0) return ;
+        if (childCount == 1) {
+            animator = displayBySingleStyle();
+        } else if (childCount == 2) {
+            animator = displayByDoubleStyle();
+        } else {
+            pageOffsetSize = width * 1.f / (childCount + 1);
+            pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? pageOffsetSize : MIN_OFFSET_SIZE;
+            pageOffsetSize = pageOffsetSize > MAX_OFFSET_SIZE ? MAX_OFFSET_SIZE : pageOffsetSize;
+            animator = displayByMultipleStyle();
+        }
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                updateContainerIntercept(true);
+            }
+        });
+        animator.start();
+    }
+
+    public void closure() {
+        controView = controView == null ? getChildAt(getChildCount() - 1) : controView;
+        AnimatorSet animatorSet = null;
+        resetBackground = false;
+        switch (getLayoutStyle()) {
+            case STYLE_SINGLE:
+                animatorSet = singleStyleAnimator(controView);
+                break;
+            case STYLE_DOUBLE:
+                animatorSet = doubleStyleAnimator(controView);
+                break;
+            case STYLE_MULTIPLE:
+                animatorSet = multipleStyleAnimator(controView);
+                break;
+        }
+        if (animatorSet == null) return ;
+        animatorSet.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                if (onSelectedActivityCallback != null) {
+                    updateContainerIntercept(false);
+                    onSelectedActivityCallback.onSelected(controView);
+                    controView.setOnClickListener(null);
+                    controView = null;
+                }
+            }
+        });
+        animatorSet.start();
     }
 
     public void log(String text) {
