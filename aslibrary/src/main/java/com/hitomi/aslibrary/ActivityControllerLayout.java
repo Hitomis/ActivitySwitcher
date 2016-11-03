@@ -76,34 +76,23 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     @NonNull
+    private ObjectAnimator getCheckedScaleXAnima(View view) {
+        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
+        chooseScaleXAnima.setDuration(200);
+        return chooseScaleXAnima;
+    }
+
+    @NonNull
     private ObjectAnimator getCheckedScaleYAnima(View view) {
         ObjectAnimator chooseScaleYAnima = ObjectAnimator.ofFloat(view, "scaleY", view.getScaleY(), 1.0f);
         chooseScaleYAnima.setDuration(200);
         chooseScaleYAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                ViewGroup vgChild;
-                RoundRectDrawableWithShadow drawable;
-                if (valueAnimator.getAnimatedFraction() > .3f && !resetBackground) {
-                    for (int i = 0; i < getChildCount(); i++) {
-                        vgChild = (ViewGroup) getChildAt(i);
-                        if (vgChild.getBackground() instanceof RoundRectDrawableWithShadow) {
-                            drawable = (RoundRectDrawableWithShadow) vgChild.getBackground();
-                            vgChild.setBackgroundColor(drawable.getBackgroundColor());
-                        }
-                    }
-                    resetBackground = true;
-                }
+                removeShadow(valueAnimator);
             }
         });
         return chooseScaleYAnima;
-    }
-
-    @NonNull
-    private ObjectAnimator getCheckedScaleXAnima(View view) {
-        ObjectAnimator chooseScaleXAnima = ObjectAnimator.ofFloat(view, "scaleX", view.getScaleX(), 1.0f);
-        chooseScaleXAnima.setDuration(200);
-        return chooseScaleXAnima;
     }
 
     @NonNull
@@ -257,6 +246,21 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.setInterpolator(new DecelerateInterpolator());
         animatorSet.play(scaleAnima).with(tranXAnima);
         return animatorSet;
+    }
+
+    private void removeShadow(ValueAnimator valueAnimator) {
+        ViewGroup vgChild;
+        RoundRectDrawableWithShadow drawable;
+        if (valueAnimator.getAnimatedFraction() > .3f && !resetBackground) {
+            for (int i = 0; i < getChildCount(); i++) {
+                vgChild = (ViewGroup) getChildAt(i);
+                if (vgChild.getBackground() instanceof RoundRectDrawableWithShadow) {
+                    drawable = (RoundRectDrawableWithShadow) vgChild.getBackground();
+                    vgChild.setBackgroundColor(drawable.getBackgroundColor());
+                }
+            }
+            resetBackground = true;
+        }
     }
 
     private int getLayoutStyle() {
