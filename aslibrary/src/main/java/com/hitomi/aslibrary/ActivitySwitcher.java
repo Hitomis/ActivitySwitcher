@@ -12,6 +12,8 @@ public class ActivitySwitcher {
 
     private ActivitySwitcherHelper switcherHelper;
 
+    private OnActivitySwitchListener onActivitySwitchListener;
+
     private boolean switching;
 
     private float preX, touchSlop;
@@ -39,7 +41,6 @@ public class ActivitySwitcher {
                 float slideX = event.getX() - preX;
                 if (preX <= touchSlop && slideX > 50 && !switching) {
                     showSwitcher();
-                    switching = true;
                 }
                 break;
         }
@@ -54,11 +55,23 @@ public class ActivitySwitcher {
     }
 
     public void showSwitcher() {
-        switcherHelper.startSwitch();
+        switching = true;
+        switcherHelper.startSwitch(onActivitySwitchListener);
     }
 
     public void setSwitching(boolean switching) {
         this.switching = switching;
+    }
+
+    public void setOnActivitySwitchListener(OnActivitySwitchListener listener) {
+        onActivitySwitchListener = listener;
+    }
+
+    public interface OnActivitySwitchListener {
+
+        void onSwitchStarted();
+
+        void onSwitchFinished(Activity activity);
     }
 
 }

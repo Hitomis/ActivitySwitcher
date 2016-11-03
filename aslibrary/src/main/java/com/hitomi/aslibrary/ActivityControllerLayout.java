@@ -305,6 +305,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             @Override
             public void onAnimationEnd(Animator animation) {
                 flag = FLAG_DISPLAYED;
+                if (onSelectedActivityCallback != null)
+                    onSelectedActivityCallback.onDisplayed();
             }
         });
         animator.start();
@@ -330,12 +332,12 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (onSelectedActivityCallback != null) {
-                    updateContainerIntercept(false);
+                if (onSelectedActivityCallback != null)
                     onSelectedActivityCallback.onSelected(controView);
-                    controView.setOnClickListener(null);
-                    controView = null;
-                }
+
+                updateContainerIntercept(false);
+                controView.setOnClickListener(null);
+                controView = null;
                 flag = FLAG_CLOSED;
             }
         });
@@ -351,6 +353,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     public interface OnSelectedActivityCallback {
+
+        void onDisplayed();
+
         void onSelected(View selectedChild);
+
     }
 }

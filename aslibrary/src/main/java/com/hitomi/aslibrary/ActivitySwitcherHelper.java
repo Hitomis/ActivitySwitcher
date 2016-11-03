@@ -18,9 +18,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.lang.reflect.Field;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by hitomi on 2016/10/11.
@@ -35,8 +33,6 @@ class ActivitySwitcherHelper {
 
     private ActivityControllerLayout actControllerLayout;
 
-    private Map<View, Drawable> actBackgroundMap;
-
     private List<Activity> preActivities;
 
     public ActivitySwitcherHelper(ActivitySwitcher switcher, @NonNull Application application) {
@@ -45,11 +41,10 @@ class ActivitySwitcherHelper {
         actManager = ActivityManager.getInstance();
         application.registerActivityLifecycleCallbacks(actManager);
         actControllerLayout = new ActivityControllerLayout(application);
-        actBackgroundMap = new HashMap<>();
         attachBlurBackground();
     }
 
-    public void startSwitch() {
+    public void startSwitch(final ActivitySwitcher.OnActivitySwitchListener listener) {
         preActivities = actManager.getPreActivies();
         Activity currAct = actManager.getCurrentActivity();
         preActivities.add(currAct);
@@ -71,7 +66,6 @@ class ActivitySwitcherHelper {
                     ? contentView.getBackground()
                     : activity.getWindow().getDecorView().getBackground();
             if (background instanceof ColorDrawable) {
-                actBackgroundMap.put(contentView, background);
                 ColorDrawable colorDrawable = (ColorDrawable) background;
                 RoundRectDrawableWithShadow roundDrawable = new RoundRectDrawableWithShadow(
                         colorDrawable.getColor(), radius, shadowSize, shadowSize);
@@ -86,9 +80,15 @@ class ActivitySwitcherHelper {
         currContentView.addView(actControllerLayout);
         actControllerLayout.display(new ActivityControllerLayout.OnSelectedActivityCallback() {
             @Override
+            public void onDisplayed() {
+                if (listener != null)
+                    listener.onSwitchStarted();
+            }
+
+            @Override
             public void onSelected(View view) {
                 actSwitcher.setSwitching(false);
-                endSwitch(actControllerLayout.indexOfChild(view));
+                endSwitch(actControllerLayout.indexOfChild(view), listener);
             }
         });
     }
@@ -105,7 +105,7 @@ class ActivitySwitcherHelper {
         return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_DISPLAYED;
     }
 
-    private void endSwitch(int selectedIndex) {
+    private void endSwitch(int selectedIndex, ActivitySwitcher.OnActivitySwitchListener listener) {
         // 从栈顶 Activity 的 ContentView 中移除 ActivityControllerLayout
         FrameLayout topContentViewGroup = getContentView(actManager.getCurrentActivity().getWindow());
         topContentViewGroup.removeView(actControllerLayout);
@@ -137,6 +137,7 @@ class ActivitySwitcherHelper {
             contentViewGroup.addView(contentView, contentViewLp);
         }
         actControllerLayout.removeAllViews();
+        if (listener != null) listener.onSwitchFinished(preActivities.get(selectedIndex));
     }
 
     /**
