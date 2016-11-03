@@ -9,6 +9,7 @@ import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
@@ -68,11 +69,42 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        controView = findControlView(ev);
+        log("当前点击的是第 " + indexOfChild(controView) + " 个 Activity");
+        if (controView == null) return super.dispatchTouchEvent(ev);
+        switch (ev.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                break;
+            case MotionEvent.ACTION_MOVE:
+                break;
+            case MotionEvent.ACTION_UP:
+                break;
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+
+    @Override
     public void onClick(final View view) {
         if (flag == FLAG_DISPLAYED) {
             controView = view;
             closure();
         }
+    }
+
+    private View findControlView(MotionEvent ev) {
+        int childCount = getChildCount();
+        View controlView = null;
+        ActivityContainer container;
+        for (int i = childCount - 1; i >= 0; i--) {
+            container = (ActivityContainer) getChildAt(i);
+            if (container.getBounds().contains(ev.getX(), ev.getY())) {
+                controlView = container;
+                break;
+            }
+        }
+        return controlView;
     }
 
     @NonNull
