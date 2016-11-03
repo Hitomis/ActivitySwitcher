@@ -41,9 +41,12 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     private int flag;
     private int width;
+
     private float pageOffsetSize;
+    private float preX, preY;
 
     private boolean resetBackground;
+    private boolean perPressed;
 
     private OnSelectedActivityCallback onSelectedActivityCallback;
     private View controView;
@@ -70,15 +73,30 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        controView = findControlView(ev);
-        log("当前点击的是第 " + indexOfChild(controView) + " 个 Activity");
-        if (controView == null) return super.dispatchTouchEvent(ev);
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                controView = findControlView(ev);
+                preY = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
+                float diffY = ev.getY() - preY;
+                controView.setY(controView.getY() + diffY);
+                preY = ev.getY();
                 break;
             case MotionEvent.ACTION_UP:
+                ActivityContainer actContainer = (ActivityContainer) controView;
+                boolean over = Math.abs(actContainer.getY()) >= actContainer.getIntrinsicHeight() * .618;
+                if (controView.getY() < 0 && over) { // 上移且超出阈值
+                    float endTranY = actContainer.getY() - actContainer.getBounds().bottom;
+                    ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(actContainer, "Y", actContainer.getY(), endTranY);
+                    tranYAnima.setDuration(150);
+                    tranYAnima.start();
+                } else {
+                    ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(actContainer, "Y", actContainer.getY(), 0);
+                    tranYAnima.setDuration(350);
+                    tranYAnima.setInterpolator(new DecelerateInterpolator());
+                    tranYAnima.start();
+                }
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -88,8 +106,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     @Override
     public void onClick(final View view) {
         if (flag == FLAG_DISPLAYED) {
-            controView = view;
-            closure();
+//            controView = view;
+//            closure();
         }
     }
 

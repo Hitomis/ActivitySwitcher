@@ -105,4 +105,12 @@ public class ActivityContainer extends FrameLayout {
     public RectF getBounds() {
         return bounds;
     }
+
+    public float getIntrinsicHeight() {
+        return bounds.bottom - bounds.top;
+    }
+
+    public float getIntrinsicWidth() {
+        return bounds.right - bounds.left;
+    }
 }
