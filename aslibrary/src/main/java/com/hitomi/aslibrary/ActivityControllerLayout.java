@@ -50,6 +50,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     private float pageOffsetSize;
     private float preX, preY;
+    private float controlViewBottom = 0.f;
+    private float[] originalContainerX;
 
     private boolean resetBackground;
     private boolean perPressed;
@@ -83,11 +85,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         super.addView(child);
     }
 
-    float controlViewBottom = 0.f;
-    float[] originalContainerX;
-
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (findControlView(ev) == null) return false;
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (null == velocityTracker) {
@@ -98,12 +98,27 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 velocityTracker.addMovement(ev);
 
                 controlView = findControlView(ev);
-                if (controlView == null) return super.dispatchTouchEvent(ev);
                 controlViewBottom = controlView.getBounds().bottom;
-                originalContainerX = new float[getChildCount() - 1 - indexOfChild(controlView)];
-                for (int i = indexOfChild(controlView) + 1; i < getChildCount(); i++) {
-                    originalContainerX[i - (indexOfChild(controlView) + 1)] = getChildAt(i).getX();
+                int controlIndex = indexOfChild(controlView);
+                if (getChildCount() != 3) {
+                    originalContainerX = new float[getChildCount() - 1 - controlIndex];
+                    for (int i = controlIndex + 1; i < getChildCount(); i++) {
+                        originalContainerX[i - controlIndex - 1] = getChildAt(i).getX();
+                    }
+                } else {
+                    originalContainerX = new float[2];
+                    if (controlIndex == 0) {
+                        originalContainerX[0] = getChildAt(1).getX();
+                        originalContainerX[1] = getChildAt(2).getX();
+                    } else if (controlIndex == 1) {
+                        originalContainerX[0] = getChildAt(0).getX();
+                        originalContainerX[1] = getChildAt(2).getX();
+                    } else {
+                        originalContainerX[0] = getChildAt(0).getX();
+                        originalContainerX[1] = getChildAt(1).getX();
+                    }
                 }
+
                 preY = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -180,17 +195,32 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     private void moveLastPosition() {
-        float currOffsetX;
-        float totalOffsetX = getLayoutStyle() == STYLE_DOUBLE
-                ? (width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2)
-                : pageOffsetSize;
         int controlIndex = indexOfChild(controlView);
         if (getChildCount() == 3) {
-
+            View belowChild, aboveChild;
+            float belowTotalX, aboveTotalX;
+            float belowOffsetX, aboveOffsetX;
             if (controlIndex == 0) {
-
+                belowChild = getChildAt(1);
+                aboveChild = getChildAt(2);
+            } else if (controlIndex == 1) {
+                belowChild = getChildAt(0);
+                aboveChild = getChildAt(2);
+            } else {
+                belowChild = getChildAt(0);
+                aboveChild = getChildAt(1);
             }
+            belowTotalX = originalContainerX[0];
+            belowOffsetX = controlView.getY() * belowTotalX / controlViewBottom;
+            belowChild.setX(originalContainerX[0] + belowOffsetX);
+            aboveTotalX = width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2 - originalContainerX[1];
+            aboveOffsetX = controlView.getY() * aboveTotalX / controlViewBottom;
+            aboveChild.setX(originalContainerX[1] - aboveOffsetX);
         } else {
+            float currOffsetX;
+            float totalOffsetX = getLayoutStyle() == STYLE_DOUBLE
+                    ? (width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2)
+                    : pageOffsetSize;
             for (int i = controlIndex + 1; i < getChildCount(); i++) {
                 if (controlViewBottom == 0.f) continue;
                 currOffsetX = controlView.getY() * totalOffsetX / controlViewBottom;

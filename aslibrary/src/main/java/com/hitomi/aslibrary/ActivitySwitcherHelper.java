@@ -60,6 +60,13 @@ class ActivitySwitcherHelper {
             actControllerLayout.removeView(flingContainer);
             preActivities.remove(flingActivity);
             flingActivities.add(flingActivity);
+
+            if (preActivities.isEmpty()) {
+                for (Activity flingAct : flingActivities) {
+                    finishActivityByNoAnimation(flingAct);
+                }
+                android.os.Process.killProcess(android.os.Process.myPid());
+            }
         }
     };
 
