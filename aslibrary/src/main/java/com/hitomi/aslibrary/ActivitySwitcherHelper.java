@@ -18,6 +18,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +35,33 @@ class ActivitySwitcherHelper {
     private ActivityControllerLayout actControllerLayout;
 
     private List<Activity> preActivities;
+    private List<Activity> flingActivities;
+
+    private ActivitySwitcher.OnActivitySwitchListener onActivitySwitchListener;
+
+    private ActivityControllerLayout.OnControlCallback callback = new ActivityControllerLayout.OnControlCallback() {
+
+        @Override
+        public void onDisplayed() {
+            if (onActivitySwitchListener != null)
+                onActivitySwitchListener.onSwitchStarted();
+        }
+
+        @Override
+        public void onSelected(ActivityContainer selectedContainer) {
+            actSwitcher.setSwitching(false);
+            endSwitch(actControllerLayout.indexOfChild(selectedContainer));
+        }
+
+        @Override
+        public void onFling(ActivityContainer flingContainer) {
+            int index = actControllerLayout.indexOfChild(flingContainer);
+            Activity flingActivity = preActivities.get(index);
+            actControllerLayout.removeView(flingContainer);
+            preActivities.remove(flingActivity);
+            flingActivities.add(flingActivity);
+        }
+    };
 
     public ActivitySwitcherHelper(ActivitySwitcher switcher, @NonNull Application application) {
         actSwitcher = switcher;
@@ -41,10 +69,11 @@ class ActivitySwitcherHelper {
         actManager = ActivityManager.getInstance();
         application.registerActivityLifecycleCallbacks(actManager);
         actControllerLayout = new ActivityControllerLayout(application);
+        flingActivities = new ArrayList<>();
         attachBlurBackground();
     }
 
-    public void startSwitch(final ActivitySwitcher.OnActivitySwitchListener listener) {
+    public void startSwitch() {
         preActivities = actManager.getPreActivies();
         Activity currAct = actManager.getCurrentActivity();
         preActivities.add(currAct);
@@ -78,19 +107,7 @@ class ActivitySwitcherHelper {
 
         FrameLayout currContentView = getContentView(currAct.getWindow());
         currContentView.addView(actControllerLayout);
-        actControllerLayout.display(new ActivityControllerLayout.OnSelectedActivityCallback() {
-            @Override
-            public void onDisplayed() {
-                if (listener != null)
-                    listener.onSwitchStarted();
-            }
-
-            @Override
-            public void onSelected(View view) {
-                actSwitcher.setSwitching(false);
-                endSwitch(actControllerLayout.indexOfChild(view), listener);
-            }
-        });
+        actControllerLayout.display(callback);
     }
 
     public void endSwitch() {
@@ -105,21 +122,22 @@ class ActivitySwitcherHelper {
         return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_DISPLAYED;
     }
 
-    private void endSwitch(int selectedIndex, ActivitySwitcher.OnActivitySwitchListener listener) {
+    private void endSwitch(int selectedIndex) {
         // 从栈顶 Activity 的 ContentView 中移除 ActivityControllerLayout
         FrameLayout topContentViewGroup = getContentView(actManager.getCurrentActivity().getWindow());
         topContentViewGroup.removeView(actControllerLayout);
-        // 关闭当前选中的 Activity 之后的 Activity
+        // 关闭当前选中的 Activity 之后的 Activity 和被 fling 掉的 Activity
         Activity activity;
         View contentView;
         for (int i = preActivities.size() - 1; i > selectedIndex; i--) {
             activity = preActivities.get(i);
-            Window window = activity.getWindow();
-            window.getDecorView().setAlpha(0);
-            activity.finish();
-            activity.overridePendingTransition(0, 0);
+            finishActivityByNoAnimation(activity);
         }
-        // 将 ActivityControllerLayout 中的每个 ContentView 还原给各个 Activity
+        for (Activity act : flingActivities) {
+            finishActivityByNoAnimation(act);
+        }
+
+        // 将 ActivityControllerLayout 中的每个 ContentView 还原给 Activity
         FrameLayout contentViewGroup;
         FrameLayout.LayoutParams contentViewLp;
         ActivityContainer activityContainer;
@@ -137,7 +155,15 @@ class ActivitySwitcherHelper {
             contentViewGroup.addView(contentView, contentViewLp);
         }
         actControllerLayout.removeAllViews();
-        if (listener != null) listener.onSwitchFinished(preActivities.get(selectedIndex));
+        if (onActivitySwitchListener != null)
+            onActivitySwitchListener.onSwitchFinished(preActivities.get(selectedIndex));
+    }
+
+    private void finishActivityByNoAnimation(Activity activity) {
+        Window window = activity.getWindow();
+        window.getDecorView().setAlpha(0);
+        activity.finish();
+        activity.overridePendingTransition(0, 0);
     }
 
     /**
@@ -250,4 +276,7 @@ class ActivitySwitcherHelper {
         return (FrameLayout) window.findViewById(Window.ID_ANDROID_CONTENT);
     }
 
+    public void setOnActivitySwitchListener(ActivitySwitcher.OnActivitySwitchListener listener) {
+        this.onActivitySwitchListener = listener;
+    }
 }

@@ -6,11 +6,14 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.VelocityTracker;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -39,6 +42,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private static final int MIN_OFFSET_SIZE = 80;
     private static final int MAX_OFFSET_SIZE = 180;
 
+    private int maxVelocity = 2500;
+    private int touchSlop = 8;
+
     private int flag;
     private int width;
 
@@ -48,8 +54,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private boolean resetBackground;
     private boolean perPressed;
 
-    private OnSelectedActivityCallback onSelectedActivityCallback;
-    private View controView;
+    private VelocityTracker velocityTracker;
+
+    private OnControlCallback onControlCallback;
+    private ActivityContainer controView;
 
     public ActivityControllerLayout(Context context) {
         this(context, null);
@@ -63,6 +71,10 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         super(context, attrs, defStyleAttr);
         flag = FLAG_CLOSED;
         width = getResources().getDisplayMetrics().widthPixels;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.DONUT) {
+            ViewConfiguration conf = ViewConfiguration.get(getContext());
+            touchSlop = conf.getScaledTouchSlop();
+        }
     }
 
     @Override
@@ -75,27 +87,57 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     public boolean dispatchTouchEvent(MotionEvent ev) {
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
+                if (null == velocityTracker) {
+                    velocityTracker = VelocityTracker.obtain();
+                } else {
+                    velocityTracker.clear();
+                }
+                velocityTracker.addMovement(ev);
+
                 controView = findControlView(ev);
                 preY = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
+                velocityTracker.addMovement(ev);
                 float diffY = ev.getY() - preY;
                 controView.setY(controView.getY() + diffY);
                 preY = ev.getY();
                 break;
             case MotionEvent.ACTION_UP:
+                velocityTracker.addMovement(ev);
+                velocityTracker.computeCurrentVelocity(1000);
+                float velocityY = velocityTracker.getYVelocity();
                 ActivityContainer actContainer = (ActivityContainer) controView;
                 boolean over = Math.abs(actContainer.getY()) >= actContainer.getIntrinsicHeight() * .618;
-                if (controView.getY() < 0 && over) { // 上移且超出阈值
+                if ((controView.getY() < 0 && over) || Math.abs(velocityY) >= maxVelocity) {
+                    // 上移且超出阈值 或者 上移速度超过阈值
                     float endTranY = actContainer.getY() - actContainer.getBounds().bottom;
                     ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(actContainer, "Y", actContainer.getY(), endTranY);
                     tranYAnima.setDuration(150);
+                    tranYAnima.addListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            if (onControlCallback != null) {
+                                onControlCallback.onFling(controView);
+                            }
+                        }
+                    });
                     tranYAnima.start();
                 } else {
                     ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(actContainer, "Y", actContainer.getY(), 0);
                     tranYAnima.setDuration(350);
                     tranYAnima.setInterpolator(new DecelerateInterpolator());
                     tranYAnima.start();
+                }
+                if (null != velocityTracker) {
+                    velocityTracker.recycle();
+                    velocityTracker = null;
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+                if (null != velocityTracker) {
+                    velocityTracker.recycle();
+                    velocityTracker = null;
                 }
                 break;
         }
@@ -111,9 +153,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         }
     }
 
-    private View findControlView(MotionEvent ev) {
+    private ActivityContainer findControlView(MotionEvent ev) {
         int childCount = getChildCount();
-        View controlView = null;
+        ActivityContainer controlView = null;
         ActivityContainer container;
         for (int i = childCount - 1; i >= 0; i--) {
             container = (ActivityContainer) getChildAt(i);
@@ -334,8 +376,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         }
     }
 
-    public void display(@NonNull OnSelectedActivityCallback callback) {
-        onSelectedActivityCallback = callback;
+    public void display(@NonNull OnControlCallback callback) {
+        onControlCallback = callback;
         flag = FLAG_DISPLAYING;
         Animator animator;
         int childCount = getChildCount();
@@ -359,15 +401,17 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             @Override
             public void onAnimationEnd(Animator animation) {
                 flag = FLAG_DISPLAYED;
-                if (onSelectedActivityCallback != null)
-                    onSelectedActivityCallback.onDisplayed();
+                if (onControlCallback != null)
+                    onControlCallback.onDisplayed();
             }
         });
         animator.start();
     }
 
     public void closure() {
-        controView = controView == null ? getChildAt(getChildCount() - 1) : controView;
+        controView = controView == null || indexOfChild(controView) == -1
+                ? (ActivityContainer) getChildAt(getChildCount() - 1)
+                : controView;
         flag = FLAG_CLOSING;
         AnimatorSet animatorSet = null;
         resetBackground = false;
@@ -386,8 +430,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animatorSet.addListener(new AnimatorListenerAdapter() {
             @Override
             public void onAnimationEnd(Animator animation) {
-                if (onSelectedActivityCallback != null)
-                    onSelectedActivityCallback.onSelected(controView);
+                if (onControlCallback != null)
+                    onControlCallback.onSelected(controView);
 
                 updateContainerIntercept(false);
                 controView.setOnClickListener(null);
@@ -406,11 +450,13 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         Log.d(TAG, text);
     }
 
-    public interface OnSelectedActivityCallback {
+    public interface OnControlCallback {
 
         void onDisplayed();
 
-        void onSelected(View selectedChild);
+        void onSelected(ActivityContainer selectedContainer);
+
+        void onFling(ActivityContainer flingContainer);
 
     }
 }
