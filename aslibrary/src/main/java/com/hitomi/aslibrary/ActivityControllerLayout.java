@@ -6,14 +6,12 @@ import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
@@ -49,7 +47,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private int width;
 
     private float pageOffsetSize;
-    private float preX, preY;
+    private float preX, preY, diffY;
     private float controlViewBottom = 0.f;
     private float[] originalContainerX;
 
@@ -73,10 +71,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         super(context, attrs, defStyleAttr);
         flag = FLAG_CLOSED;
         width = getResources().getDisplayMetrics().widthPixels;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.DONUT) {
-            ViewConfiguration conf = ViewConfiguration.get(getContext());
-            touchSlop = conf.getScaledTouchSlop();
-        }
     }
 
     @Override
@@ -87,7 +81,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (findControlView(ev) == null) return false;
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (null == velocityTracker) {
@@ -96,7 +89,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     velocityTracker.clear();
                 }
                 velocityTracker.addMovement(ev);
-
+                if (findControlView(ev) == null) return false;
                 controlView = findControlView(ev);
                 controlViewBottom = controlView.getBounds().bottom;
                 int controlIndex = indexOfChild(controlView);
@@ -123,11 +116,11 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 break;
             case MotionEvent.ACTION_MOVE:
                 velocityTracker.addMovement(ev);
-                float diffY = ev.getY() - preY;
-                if (controlView.getY() > 0 && diffY > 0) { // 下移
+                diffY = ev.getY() - preY;
+                if (controlView.getY() > 0 && diffY > 0) { // 在中线之下
                     float slopRate = 1.f - 1.65f * controlView.getY() / (controlView.getIntrinsicHeight());
                     diffY *= slopRate;
-                } else if (controlView.getY() <= 0) { // 上移->
+                } else if (controlView.getY() <= 0) { // 在中线之上
                     moveLastPosition();
                 }
                 controlView.setY(controlView.getY() + diffY);
@@ -138,7 +131,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 velocityTracker.computeCurrentVelocity(1000);
                 float velocityY = velocityTracker.getYVelocity();
                 boolean over = Math.abs(controlView.getY()) >= controlView.getIntrinsicHeight() * .618;
-                if (controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
+                if (diffY < touchSlop * .4f && controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
                     // 上移且超出阈值 或者 上移速度超过阈值 -> 移除到窗外
                     slideOutAnimation();
                 } else { // 下移或者上移没有超出阈值- > 回落到原始位置

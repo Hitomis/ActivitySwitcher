@@ -65,6 +65,7 @@ class ActivitySwitcherHelper {
                 for (Activity flingAct : flingActivities) {
                     finishActivityByNoAnimation(flingAct);
                 }
+                // 必须先关闭所有 Activity 才能结束进程
                 android.os.Process.killProcess(android.os.Process.myPid());
             }
         }
