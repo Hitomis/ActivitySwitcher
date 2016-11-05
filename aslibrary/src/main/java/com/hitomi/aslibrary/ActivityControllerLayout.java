@@ -49,7 +49,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private float pageOffsetSize;
     private float preX, preY, diffY;
     private float controlViewBottom = 0.f;
+
     private float[] originalContainerX;
+    private float[] originalContainerScale;
 
     private boolean resetBackground;
     private boolean perPressed;
@@ -89,47 +91,32 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     velocityTracker.clear();
                 }
                 velocityTracker.addMovement(ev);
+
                 if (findControlView(ev) == null) return false;
-                controlView = findControlView(ev);
-                controlViewBottom = controlView.getBounds().bottom;
-                int controlIndex = indexOfChild(controlView);
-                if (getChildCount() != 3) {
-                    originalContainerX = new float[getChildCount() - 1 - controlIndex];
-                    for (int i = controlIndex + 1; i < getChildCount(); i++) {
-                        originalContainerX[i - controlIndex - 1] = getChildAt(i).getX();
-                    }
-                } else {
-                    originalContainerX = new float[2];
-                    if (controlIndex == 0) {
-                        originalContainerX[0] = getChildAt(1).getX();
-                        originalContainerX[1] = getChildAt(2).getX();
-                    } else if (controlIndex == 1) {
-                        originalContainerX[0] = getChildAt(0).getX();
-                        originalContainerX[1] = getChildAt(2).getX();
-                    } else {
-                        originalContainerX[0] = getChildAt(0).getX();
-                        originalContainerX[1] = getChildAt(1).getX();
-                    }
-                }
+                cacheOrginalContainerParamter(controlView = findControlView(ev));
 
                 preY = ev.getY();
                 break;
             case MotionEvent.ACTION_MOVE:
                 velocityTracker.addMovement(ev);
+
                 diffY = ev.getY() - preY;
-                if (controlView.getY() > 0 && diffY > 0) { // 在中线之下
+                float newDiffY = diffY;
+                if (controlView.getY() <= 0) { // 在中线之上
+                    moveToLastContainerPos();
+                } else if (controlView.getY() > 0 && diffY > 0) { // 在中线之下
                     float slopRate = 1.f - 1.65f * controlView.getY() / (controlView.getIntrinsicHeight());
-                    diffY *= slopRate;
-                } else if (controlView.getY() <= 0) { // 在中线之上
-                    moveLastPosition();
+                    newDiffY *= slopRate;
                 }
-                controlView.setY(controlView.getY() + diffY);
+                controlView.setY(controlView.getY() + newDiffY);
+
                 preY = ev.getY();
                 break;
             case MotionEvent.ACTION_UP:
                 velocityTracker.addMovement(ev);
                 velocityTracker.computeCurrentVelocity(1000);
                 float velocityY = velocityTracker.getYVelocity();
+
                 boolean over = Math.abs(controlView.getY()) >= controlView.getIntrinsicHeight() * .618;
                 if (diffY < touchSlop * .4f && controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
                     // 上移且超出阈值 或者 上移速度超过阈值 -> 移除到窗外
@@ -137,6 +124,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 } else { // 下移或者上移没有超出阈值- > 回落到原始位置
                     slideOrignalPositionAnimation();
                 }
+
                 if (null != velocityTracker) {
                     velocityTracker.recycle();
                     velocityTracker = null;
@@ -152,6 +140,44 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         return super.dispatchTouchEvent(ev);
     }
 
+    private void cacheOrginalContainerParamter(ActivityContainer controlContainer) {
+        controlViewBottom = controlContainer.getBounds().bottom;
+        int controlIndex = indexOfChild(controlContainer);
+        if (getChildCount() != 3) {
+            originalContainerX = new float[getChildCount()];
+            originalContainerScale = new float[getChildCount()];
+            View child;
+            for (int i = 0; i < getChildCount(); i++) {
+                child = getChildAt(i);
+                originalContainerX[i] = child.getX();
+                originalContainerScale[i] = child.getScaleX();
+            }
+        } else {
+            originalContainerX = new float[2];
+            originalContainerScale = new float[2];
+            if (controlIndex == 0) {
+                originalContainerX[0] = getChildAt(1).getX();
+                originalContainerX[1] = getChildAt(2).getX();
+
+                originalContainerScale[0] = getChildAt(1).getScaleX();
+                originalContainerScale[1] = getChildAt(2).getScaleX();
+            } else if (controlIndex == 1) {
+                originalContainerX[0] = getChildAt(0).getX();
+                originalContainerX[1] = getChildAt(2).getX();
+
+                originalContainerScale[0] = getChildAt(0).getScaleX();
+                originalContainerScale[1] = getChildAt(2).getScaleX();
+            } else {
+                originalContainerX[0] = getChildAt(0).getX();
+                originalContainerX[1] = getChildAt(1).getX();
+
+                originalContainerScale[0] = getChildAt(0).getScaleX();
+                originalContainerScale[1] = getChildAt(1).getScaleX();
+            }
+
+        }
+    }
+
     private void slideOrignalPositionAnimation() {
         ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(controlView, "Y", controlView.getY(), 0);
         tranYAnima.setDuration(350);
@@ -160,7 +186,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 if (controlView.getY() < 0)
-                    moveLastPosition();
+                    moveToLastContainerPos();
             }
         });
         tranYAnima.start();
@@ -173,7 +199,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         tranYAnima.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
-                moveLastPosition();
+                moveToLastContainerPos();
             }
         });
         tranYAnima.addListener(new AnimatorListenerAdapter() {
@@ -187,12 +213,11 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         tranYAnima.start();
     }
 
-    private void moveLastPosition() {
+    private void moveToLastContainerPos() {
         int controlIndex = indexOfChild(controlView);
         if (getChildCount() == 3) {
             View belowChild, aboveChild;
-            float belowTotalX, aboveTotalX;
-            float belowOffsetX, aboveOffsetX;
+            float totalOffset, currOffset;
             if (controlIndex == 0) {
                 belowChild = getChildAt(1);
                 aboveChild = getChildAt(2);
@@ -203,31 +228,55 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 belowChild = getChildAt(0);
                 aboveChild = getChildAt(1);
             }
-            belowTotalX = originalContainerX[0];
-            belowOffsetX = controlView.getY() * belowTotalX / controlViewBottom;
-            belowChild.setX(originalContainerX[0] + belowOffsetX);
-            aboveTotalX = width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2 - originalContainerX[1];
-            aboveOffsetX = controlView.getY() * aboveTotalX / controlViewBottom;
-            aboveChild.setX(originalContainerX[1] - aboveOffsetX);
-        } else {
-            float currOffsetX;
-            float totalOffsetX = getLayoutStyle() == STYLE_DOUBLE
-                    ? (width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2)
-                    : pageOffsetSize;
+
+            totalOffset = originalContainerX[0];
+            currOffset = calcOffsetSize(totalOffset);
+            belowChild.setX(originalContainerX[0] + currOffset);
+
+            totalOffset = CENTER_SCALE_RATE - originalContainerScale[0];
+            currOffset = calcOffsetSize(totalOffset);
+            belowChild.setScaleX(originalContainerScale[0] - currOffset);
+            belowChild.setScaleY(originalContainerScale[0] - currOffset);
+
+            totalOffset = width * (CENTER_SCALE_RATE + OFFSET_SCALE_RATE) / 2 - originalContainerX[1];
+            currOffset = calcOffsetSize(totalOffset);
+            aboveChild.setX(originalContainerX[1] - currOffset);
+
+            totalOffset = CENTER_SCALE_RATE + OFFSET_SCALE_RATE - originalContainerScale[1];
+            currOffset = calcOffsetSize(totalOffset);
+            aboveChild.setScaleX(originalContainerScale[1] - currOffset);
+            aboveChild.setScaleY(originalContainerScale[1] - currOffset);
+        } else if (getChildCount() != 1 && getChildCount() != controlIndex + 1) {
+            float currOffsetX, currScaleSize;
+            float totalOffsetX = originalContainerX[controlIndex + 1] - originalContainerX[controlIndex];
+            float totalScaleSize = getLayoutStyle() == STYLE_DOUBLE
+                    ? OFFSET_SCALE_RATE : 3 * OFFSET_SCALE_RATE;
+
+            View child;
             for (int i = controlIndex + 1; i < getChildCount(); i++) {
                 if (controlViewBottom == 0.f) continue;
-                currOffsetX = controlView.getY() * totalOffsetX / controlViewBottom;
-                getChildAt(i).setX(originalContainerX[i - controlIndex - 1] + currOffsetX);
+                child = getChildAt(i);
+
+                currOffsetX = calcOffsetSize(totalOffsetX);
+                child.setX(originalContainerX[i] + currOffsetX);
+
+                currScaleSize = calcOffsetSize(totalScaleSize);
+                child.setScaleX(originalContainerScale[i] + currScaleSize);
+                child.setScaleY(originalContainerScale[i] + currScaleSize);
             }
         }
     }
 
+    private float calcOffsetSize(float totalSize) {
+        return controlView.getY() * totalSize / controlViewBottom;
+    }
 
     @Override
     public void onClick(final View view) {
-        if (flag == FLAG_DISPLAYED) {
-//            controlView = view;
-//            closure();
+        if (flag == FLAG_DISPLAYED
+                && Math.abs(diffY) < touchSlop
+                && Math.abs(view.getY()) < touchSlop) {
+            closure();
         }
     }
 
