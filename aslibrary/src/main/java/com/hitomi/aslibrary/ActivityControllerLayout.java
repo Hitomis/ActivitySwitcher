@@ -54,7 +54,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private float[] originalContainerScale;
 
     private boolean resetBackground;
-    private boolean perPressed;
 
     private VelocityTracker velocityTracker;
 
@@ -83,6 +82,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (flag == FLAG_DISPLAYED)
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (null == velocityTracker) {
@@ -121,8 +121,9 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 if (diffY < touchSlop * .4f && controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
                     // 上移且超出阈值 或者 上移速度超过阈值 -> 移除到窗外
                     slideOutAnimation();
-                } else { // 下移或者上移没有超出阈值- > 回落到原始位置
-                    slideOrignalPositionAnimation();
+                } else if (flag != FLAG_CLOSING && Math.abs(controlView.getY()) >= touchSlop) {
+                    // 下移或者上移没有超出阈值- > 回落到原始位置
+                    slideOrignalPosAnimation();
                 }
 
                 if (null != velocityTracker) {
@@ -178,7 +179,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         }
     }
 
-    private void slideOrignalPositionAnimation() {
+    private void slideOrignalPosAnimation() {
         ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(controlView, "Y", controlView.getY(), 0);
         tranYAnima.setDuration(350);
         tranYAnima.setInterpolator(new DecelerateInterpolator());
