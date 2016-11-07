@@ -3,7 +3,7 @@ package com.hitomi.aslibrary;
 import android.graphics.Bitmap;
 
 /**
- * Created by hitomi on 2016/10/13.
+ * 高斯模糊工具类
  */
 public class FastBlur {
 

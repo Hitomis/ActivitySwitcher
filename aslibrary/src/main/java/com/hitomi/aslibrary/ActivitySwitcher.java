@@ -6,6 +6,19 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
 /**
+ *
+ * Activity 切换器。支持：
+ * <ul>
+ *     <li>Activity 之间任意跳转</li>
+ *     <li>关闭任意N个 Activity</li>
+ *     <li>结束应用程序</li>
+ * </ul>
+ *
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
+ *
  * Created by hitomi on 2016/10/11.
  */
 public class ActivitySwitcher {
@@ -44,6 +57,10 @@ public class ActivitySwitcher {
         }
     }
 
+    /**
+     * 关闭 ActivitySwitcher 切换视图
+     * @param activity
+     */
     public void finishSwitch(Activity activity) {
         if (switcherHelper.isActivityControllerDisplayed()) {
             switcherHelper.endSwitch();
@@ -52,12 +69,15 @@ public class ActivitySwitcher {
         }
     }
 
+    /**
+     * 显示 ActivitySwitcher 切换视图
+     */
     public void showSwitcher() {
         switching = true;
         switcherHelper.startSwitch();
     }
 
-    public void setSwitching(boolean switching) {
+    void setSwitching(boolean switching) {
         this.switching = switching;
     }
 

@@ -13,6 +13,12 @@ import android.graphics.Shader;
 import android.graphics.drawable.Drawable;
 
 /**
+ * 带阴影效果圆角矩形 Drawable 抽取自本人 CrazyShadow 项目中 <br/>
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
+ *
  * Created by hitomi on 2016/10/17.
  */
 public class RoundRectDrawableWithShadow extends Drawable {

@@ -22,6 +22,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * ActivitySwitch 帮助类。负责：
+ * <ul>
+ *     <li>打开/关闭 ActivitySwitcher</li>
+ *     <li>ActivitySwitcher 背景处理</li>
+ *     <li>Activity关闭，程序结束进程处理</li>
+ * </ul>
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
+ *
  * Created by hitomi on 2016/10/11.
  */
 class ActivitySwitcherHelper {
@@ -81,7 +92,11 @@ class ActivitySwitcherHelper {
         attachBlurBackground();
     }
 
+    /**
+     * Start the Activity switch
+     */
     public void startSwitch() {
+        // 获取当前 Activity 以及当前 Activity 之前所有 Activity
         preActivities = actManager.getPreActivies();
         Activity currAct = actManager.getCurrentActivity();
         preActivities.add(currAct);
@@ -99,6 +114,7 @@ class ActivitySwitcherHelper {
             contentViewGroup.removeView(contentView);
             container = new ActivityContainer(appContext);
             container.addView(contentView);
+            // 如果 Activity 没有背景则使用 window 的背景
             background = contentView.getBackground() != null
                     ? contentView.getBackground()
                     : activity.getWindow().getDecorView().getBackground();
@@ -106,10 +122,12 @@ class ActivitySwitcherHelper {
                 ColorDrawable colorDrawable = (ColorDrawable) background;
                 RoundRectDrawableWithShadow roundDrawable = new RoundRectDrawableWithShadow(
                         colorDrawable.getColor(), radius, shadowSize, shadowSize);
+                // 设置背景
                 container.setBackgroundDrawable(roundDrawable);
             }
             FrameLayout.LayoutParams contentViewLp = new FrameLayout.LayoutParams(actSize[0], actSize[1]);
             container.setLayoutParams(contentViewLp);
+            // 将修改好背景/尺寸/布局的 Activity 中的 contentView 添加到 ActivityControllerLayout 中
             actControllerLayout.addView(container);
         }
 
@@ -130,10 +148,15 @@ class ActivitySwitcherHelper {
         return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_DISPLAYED;
     }
 
+    /**
+     * End of the Activity switch
+     * @param selectedIndex
+     */
     private void endSwitch(int selectedIndex) {
         // 从栈顶 Activity 的 ContentView 中移除 ActivityControllerLayout
         FrameLayout topContentViewGroup = getContentView(actManager.getCurrentActivity().getWindow());
         topContentViewGroup.removeView(actControllerLayout);
+
         // 关闭当前选中的 Activity 之后的 Activity 和被 fling 掉的 Activity
         Activity activity;
         View contentView;
@@ -163,10 +186,15 @@ class ActivitySwitcherHelper {
             contentViewGroup.addView(contentView, contentViewLp);
         }
         actControllerLayout.removeAllViews();
+
         if (onActivitySwitchListener != null)
             onActivitySwitchListener.onSwitchFinished(preActivities.get(selectedIndex));
     }
 
+    /**
+     * 无任何痕迹实现 Activity 关闭
+     * @param activity
+     */
     private void finishActivityByNoAnimation(Activity activity) {
         Window window = activity.getWindow();
         window.getDecorView().setAlpha(0);

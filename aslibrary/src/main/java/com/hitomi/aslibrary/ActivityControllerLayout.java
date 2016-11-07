@@ -17,7 +17,11 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.FrameLayout;
 
 /**
- * 排列、展示 Activity 容器类
+ * 排列、展示、拖动 Activity 容器类 <br/>
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
  *
  * Created by hitomi on 2016/10/11.
  */
@@ -118,6 +122,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 velocityTracker.computeCurrentVelocity(1000);
                 float velocityY = velocityTracker.getYVelocity();
 
+                diffY = 0;
+
                 boolean over = Math.abs(controlView.getY()) >= controlView.getIntrinsicHeight() * .618;
                 if (diffY < touchSlop * .4f && controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
                     // 上移且超出阈值 或者 上移速度超过阈值 -> 移除到窗外
@@ -140,6 +146,15 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 break;
         }
         return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public void onClick(final View view) {
+        if (flag == FLAG_DISPLAYED
+                && Math.abs(diffY) < touchSlop
+                && Math.abs(view.getY()) < touchSlop) {
+            closure();
+        }
     }
 
     private void cacheOrginalContainerParamter(ActivityContainer controlContainer) {
@@ -275,14 +290,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         return controlView.getY() * totalSize / controlViewBottom;
     }
 
-    @Override
-    public void onClick(final View view) {
-        if (flag == FLAG_DISPLAYED
-                && Math.abs(diffY) < touchSlop
-                && Math.abs(view.getY()) < touchSlop) {
-            closure();
-        }
-    }
 
     private ActivityContainer findControlView(MotionEvent ev) {
         int childCount = getChildCount();
@@ -519,7 +526,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
             animator = displayByDoubleStyle();
         } else {
             pageOffsetSize = width * 1.f / (childCount + 1);
-            pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? pageOffsetSize : MIN_OFFSET_SIZE;
+            pageOffsetSize = pageOffsetSize < MIN_OFFSET_SIZE ? MIN_OFFSET_SIZE : pageOffsetSize;
             pageOffsetSize = pageOffsetSize > MAX_OFFSET_SIZE ? MAX_OFFSET_SIZE : pageOffsetSize;
             animator = displayByMultipleStyle();
         }

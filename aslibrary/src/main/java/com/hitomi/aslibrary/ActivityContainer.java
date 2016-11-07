@@ -8,6 +8,12 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 /**
+ * 用于 Activity 实际大小、位置以及事件分发处理 <br/>
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
+ *
  * Created by hitomi on 2016/11/2.
  */
 public class ActivityContainer extends FrameLayout {

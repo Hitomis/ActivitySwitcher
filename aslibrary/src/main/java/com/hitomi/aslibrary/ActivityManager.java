@@ -9,6 +9,12 @@ import java.util.List;
 import java.util.Stack;
 
 /**
+ * Activity 管理工具类
+ *
+ * email : 196425254@qq.com <br/>
+ *
+ * github : https://github.com/Hitomis <br/>
+ *
  * Created by hitomi on 2016/10/11.
  */
 class ActivityManager implements Application.ActivityLifecycleCallbacks {
