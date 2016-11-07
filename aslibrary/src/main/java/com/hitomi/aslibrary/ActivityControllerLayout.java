@@ -52,7 +52,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     private int width;
 
     private float pageOffsetSize;
-    private float preX, preY, diffY;
+    private float preY, diffY;
     private float controlViewBottom = 0.f;
 
     private float[] originalContainerX;
@@ -206,6 +206,12 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     moveToLastContainerPos();
             }
         });
+        tranYAnima.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                controlView = null;
+            }
+        });
         tranYAnima.start();
     }
 
@@ -226,6 +232,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 if (onControlCallback != null) {
                     onControlCallback.onFling(controlView);
                 }
+                controlView = null;
                 flag = FLAG_DISPLAYED;
             }
         });
