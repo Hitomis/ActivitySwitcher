@@ -1,5 +1,7 @@
 # ActivitySwitcher
 
+ActivitySwitcher 是一个基于 Activity 视图操作管理库，可以实现 Activity 之间任意跳转、关闭任意一个 Activity
+以及结束应用程序的功能。
 
 # Preview
 
@@ -11,17 +13,17 @@
 
 # Usage
     ​
-    1、Application 中 初始化
+   1、Application 中 初始化
         ActivitySwitcher.getInstance().init(this);
 
-    2、在 Activity 中重写 dispatchTouchEvent 处理事件分发。最好直接在 BaseActivity 中处理。万事大吉
+   2、在 Activity 中重写 dispatchTouchEvent 处理事件分发。最好直接在 BaseActivity 中处理。万事大吉
         @Override
         public boolean dispatchTouchEvent(MotionEvent ev) {
             activitySwitcher.processTouchEvent(ev);
             return super.dispatchTouchEvent(ev);
         }
 
-    3、Android 手机默认按下返回键就回 finish 掉当前 Activity，这与本库冲突，所以需要重写 onBackPressed 方法，同样最好在 BaseActivity 中去重写，万事大吉
+   3、Android 手机默认按下返回键就回 finish 掉当前 Activity，这与本库冲突，所以需要重写 onBackPressed 方法，同样最好在 BaseActivity 中去重写，万事大吉
         @Override
         public void onBackPressed() {
             activitySwitcher.finishSwitch(this);
