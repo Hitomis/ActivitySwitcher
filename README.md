@@ -12,7 +12,7 @@
 导入 aslibrary Module 作为依赖库, 或者直接复制 com.hitomi.aslibrary 中所有类文件到自己的项目中即可
 
 # Usage
-    ​
+
    1、Application 中 初始化
 
     ActivitySwitcher.getInstance().init(this);
