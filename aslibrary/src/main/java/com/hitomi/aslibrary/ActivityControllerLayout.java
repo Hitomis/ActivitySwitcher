@@ -122,8 +122,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 velocityTracker.computeCurrentVelocity(1000);
                 float velocityY = velocityTracker.getYVelocity();
 
-                diffY = 0;
-
                 boolean over = Math.abs(controlView.getY()) >= controlView.getIntrinsicHeight() * .618;
                 if (diffY < touchSlop * .4f && controlView.getY() < 0 && (over || Math.abs(velocityY) >= maxVelocity)) {
                     // 上移且超出阈值 或者 上移速度超过阈值 -> 移除到窗外
@@ -132,6 +130,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     // 下移或者上移没有超出阈值- > 回落到原始位置
                     slideOrignalPosAnimation();
                 }
+
+                diffY = 0;
 
                 if (null != velocityTracker) {
                     velocityTracker.recycle();
