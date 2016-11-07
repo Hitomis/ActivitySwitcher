@@ -28,6 +28,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     public static final int FLAG_DISPLAYED = 200;
     public static final int FLAG_CLOSING = -100;
     public static final int FLAG_CLOSED = -200;
+    public static final int FLAG_SLIDING = 0;
 
     private static final int STYLE_SINGLE = 1;
     private static final int STYLE_DOUBLE = 1 << 1;
@@ -82,7 +83,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (flag == FLAG_DISPLAYED)
+        if (flag == FLAG_DISPLAYED || flag == FLAG_SLIDING)
         switch (ev.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 if (null == velocityTracker) {
@@ -92,7 +93,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 }
                 velocityTracker.addMovement(ev);
 
-                if (findControlView(ev) == null) return false;
+                if (findControlView(ev) == null || flag == FLAG_SLIDING) return false;
                 cacheOrginalContainerParamter(controlView = findControlView(ev));
 
                 preY = ev.getY();
@@ -194,6 +195,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
     }
 
     private void slideOutAnimation() {
+        flag = FLAG_SLIDING;
         float endTranY = controlView.getY() - controlView.getBounds().bottom;
         ObjectAnimator tranYAnima = ObjectAnimator.ofFloat(controlView, "Y", controlView.getY(), endTranY);
         tranYAnima.setDuration(150);
@@ -209,6 +211,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 if (onControlCallback != null) {
                     onControlCallback.onFling(controlView);
                 }
+                flag = FLAG_DISPLAYED;
             }
         });
         tranYAnima.start();
