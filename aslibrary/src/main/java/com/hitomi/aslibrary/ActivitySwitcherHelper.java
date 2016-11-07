@@ -137,7 +137,7 @@ class ActivitySwitcherHelper {
     }
 
     public void endSwitch() {
-        actControllerLayout.closure();
+        actControllerLayout.closure(true);
     }
 
     public boolean isActivityControllerClosed() {

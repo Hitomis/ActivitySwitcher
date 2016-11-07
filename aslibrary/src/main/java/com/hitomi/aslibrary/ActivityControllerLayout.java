@@ -153,7 +153,7 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         if (flag == FLAG_DISPLAYED
                 && Math.abs(diffY) < touchSlop
                 && Math.abs(view.getY()) < touchSlop) {
-            closure();
+            closure(false);
         }
     }
 
@@ -206,12 +206,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                     moveToLastContainerPos();
             }
         });
-        tranYAnima.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                controlView = null;
-            }
-        });
         tranYAnima.start();
     }
 
@@ -232,7 +226,6 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
                 if (onControlCallback != null) {
                     onControlCallback.onFling(controlView);
                 }
-                controlView = null;
                 flag = FLAG_DISPLAYED;
             }
         });
@@ -553,8 +546,8 @@ class ActivityControllerLayout extends FrameLayout implements View.OnClickListen
         animator.start();
     }
 
-    public void closure() {
-        controlView = controlView == null || indexOfChild(controlView) == -1
+    public void closure(boolean back) {
+        controlView = controlView == null || indexOfChild(controlView) == -1 || back
                 ? (ActivityContainer) getChildAt(getChildCount() - 1)
                 : controlView;
         flag = FLAG_CLOSING;
