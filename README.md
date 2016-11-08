@@ -14,7 +14,7 @@
 
 # Sample
 
-[点击下载](https://github.com/Hitomis/ActivitySwitcher/tree/master/sample)
+[demo.apk](https://github.com/Hitomis/ActivitySwitcher/tree/master/sample/app.apk)
 
 # Import
 
