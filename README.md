@@ -5,6 +5,7 @@
 
 # Preview
 
+录制图像有丢帧的情况，所以预览图效果不够流畅，背景图显示的也有问题。
 <img src="preview/activity_swither.gif"/>
 
 # Import
@@ -25,12 +26,17 @@
         return super.dispatchTouchEvent(ev);
     }
 
-   3、Android 手机默认按下返回键就回 finish 掉当前 Activity，这与本库冲突，所以需要重写 onBackPressed 方法，同样最好在 BaseActivity 中去重写，万事大吉
+   如果不想通过手势打开 ActivitySwitcher，可以通过以下方式手动打开
+    activitySwitcher.showSwitcher();
+
+   3、Android 手机默认按下返回键就回 finish 掉当前 Activity，这与本库冲突，所以需要重写 onBackPressed 方法，同样最好在 BaseActivity 中去重写
 
     @Override
     public void onBackPressed() {
         activitySwitcher.finishSwitch(this);
     }
+
+   示例代码详情前前往 [MainActivity](https://github.com/Hitomis/ActivitySwitcher/blob/master/app/src/main/java/com/hitomi/activityswitcher/MainActivity.java) 查看
 
 #Licence
 
