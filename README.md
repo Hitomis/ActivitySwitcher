@@ -12,6 +12,10 @@
 录制图像有丢帧的情况，所以预览图效果不够流畅，背景图显示的也有问题。
 <img src="preview/activity_swither.gif"/>
 
+# Sample
+
+[点击下载](https://github.com/Hitomis/ActivitySwitcher/tree/master/sample)
+
 # Import
 
 导入 aslibrary Module 作为依赖库, 或者直接复制 com.hitomi.aslibrary 中所有类文件到自己的项目中即可
