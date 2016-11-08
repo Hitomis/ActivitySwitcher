@@ -3,7 +3,7 @@
    ActivitySwitcher 是一个基于 Activity 视图操作管理库，可以实现 Activity 之间任意跳转、关闭任意一个 Activity
 以及结束应用程序等功能。
    
-   本库中的展现 Activity 视图时，附带阴影的卡片效果抽取自 (CrazyShadow)[https://github.com/Hitomis/CrazyShadow] 有兴趣的朋友可以移步看看。
+   本库中的展现 Activity 视图时，附带阴影的卡片效果抽取自 [CrazyShadow](https://github.com/Hitomis/CrazyShadow) 有兴趣的朋友可以移步看看。
    
    欢迎大家给 ActivitySwitcher 提 Issues，有问题我会尽快修复
 
