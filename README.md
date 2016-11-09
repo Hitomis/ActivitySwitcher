@@ -64,7 +64,7 @@
 
 | 方法 | 说明 |
 | :--: | :--: |
-| getInstance | 获取 ActivitySwitcher 示例 (ActivitySwitcher 为单例) |
+| getInstance | 获取 ActivitySwitcher 实例 (ActivitySwitcher 为单例) |
 | init | 全局初始化 ActivitySwitcher， 一般在 Application 的 onCreate 方法中调用 |
 | processTouchEvent | 用于需要手势打开 ActivitySwitcher 的场景， 一般在 BaseActivity 的 dispatchTouchEvent 方法中调用 |
 | showSwitch | 打开 ActivitySwitcher，切换到 Activity 卡片式管理界面 |
