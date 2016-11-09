@@ -51,7 +51,7 @@ public class ActivitySwitcher {
             case MotionEvent.ACTION_MOVE:
                 float slideX = event.getX() - preX;
                 if (preX <= touchSlop && slideX > 50 && !switching) {
-                    showSwitcher();
+                    showSwitch();
                 }
                 break;
         }
@@ -76,7 +76,7 @@ public class ActivitySwitcher {
     /**
      * 显示 ActivitySwitcher 切换视图
      */
-    public void showSwitcher() {
+    public void showSwitch() {
         switching = true;
         switcherHelper.startSwitch();
     }
