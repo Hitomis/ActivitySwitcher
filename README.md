@@ -60,6 +60,19 @@
 
    全部示例代码详情请前往 [MainActivity](https://github.com/Hitomis/ActivitySwitcher/blob/master/app/src/main/java/com/hitomi/activityswitcher/MainActivity.java) 查看
 
+#Method
+
+| 方法 | 说明 |
+| :--: | :--: |
+| getInstance | 获取 ActivitySwitcher 示例 (ActivitySwitcher 为单例) |
+| init | 全局初始化 ActivitySwitcher， 一般在 Application 的 onCreate 方法中调用 |
+| processTouchEvent | 用于需要手势打开 ActivitySwitcher 的场景， 一般在 BaseActivity 的 dispatchTouchEvent 方法中调用 |
+| showSwitch | 打开 ActivitySwitcher，切换到 Activity 卡片式管理界面 |
+| finishSwitch | 关闭 ActivitySwitcher， 退出 Activity 卡片式管理界面，回到选中或者默认的 Activity 界面 |
+| exit | 退出当前应用程序 |
+| setOnActivitySwitchListener | 设置监听器，监听 ActivitySwitcher 的打开和关闭 |
+
+
 #Licence
 
       Copyright 2016 Hitomis, Inc.
