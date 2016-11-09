@@ -57,6 +57,10 @@ public class ActivitySwitcher {
         }
     }
 
+    public void exit() {
+        switcherHelper.exit();
+    }
+
     /**
      * 关闭 ActivitySwitcher 切换视图
      * @param activity

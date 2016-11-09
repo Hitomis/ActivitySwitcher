@@ -50,13 +50,16 @@ public class MainActivity extends AppCompatActivity {
         tvPage.setText("当前第" + (tag + 1) + "页" );
 
         if (index == totalCount - 1) {
-            btnNext.setVisibility(View.GONE);
+            btnNext.setText("退出程序");
         }
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (++index > totalCount - 1) return;
-                startActivity(new Intent(MainActivity.this, MainActivity.class));
+                if (++index > totalCount - 1) {
+                    activitySwitcher.exit();
+                } else {
+                    startActivity(new Intent(MainActivity.this, MainActivity.class));
+                }
             }
         });
 

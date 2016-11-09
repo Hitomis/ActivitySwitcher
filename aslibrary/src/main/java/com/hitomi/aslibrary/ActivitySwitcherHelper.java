@@ -148,6 +148,18 @@ class ActivitySwitcherHelper {
         return actControllerLayout.getFlag() == ActivityControllerLayout.FLAG_DISPLAYED;
     }
 
+    public void exit() {
+        if (preActivities == null) {
+            preActivities = actManager.getPreActivies();
+        } else {
+            preActivities.addAll(flingActivities);
+        }
+        for (Activity activity : preActivities) {
+            finishActivityByNoAnimation(activity);
+        }
+        android.os.Process.killProcess(android.os.Process.myPid());
+    }
+
     /**
      * End of the Activity switch
      * @param selectedIndex
