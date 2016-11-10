@@ -1,5 +1,7 @@
 # ActivitySwitcher
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-ActivitySwitcher-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/4635)
+
    ActivitySwitcher 是一个基于 Activity 视图操作管理库，可以实现 Activity 之间任意跳转、关闭任意一个 Activity
 以及结束应用程序等功能。
    
