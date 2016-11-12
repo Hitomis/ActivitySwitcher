@@ -12,7 +12,7 @@
 # Preview
 
 录制图像有丢帧的情况，所以预览图效果不够流畅，背景图显示的也有问题。
-<img src="preview/activity_swither.gif width="400" "/>
+<img src="preview/activity_swither.gif width="400" /
 
 # Sample
 
