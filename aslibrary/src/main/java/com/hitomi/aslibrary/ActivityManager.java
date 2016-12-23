@@ -26,7 +26,9 @@ class ActivityManager implements Application.ActivityLifecycleCallbacks {
     }
 
     public static ActivityManager getInstance() {
-        activityStack = new Stack<>();
+        if (activityStack == null) {
+            activityStack = new Stack<>();
+        }
         return SingletonHolder.instance;
     }
 
